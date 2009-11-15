@@ -1,0 +1,14 @@
+#!/bin/bash
+
+rm -f *.o
+rm -f vpnmsd onconnect
+
+gcc -c vpnmsd_nf_thread.c
+gcc -c config.c
+gcc -c vpnmsd.c
+gcc -c vpnms_functions.c
+gcc -c onconnect.c
+gcc -c ondisconnect.c
+gcc -o vpnmsd config.o vpnms_functions.o vpnmsd_nf_thread.o vpnmsd.o -lmysqlclient -lz -lpthread
+gcc -o onconnect config.o vpnms_functions.o onconnect.o -lmysqlclient -lz
+gcc -o ondisconnect config.o vpnms_functions.o ondisconnect.o -lmysqlclient -lz
