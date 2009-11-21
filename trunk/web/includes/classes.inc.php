@@ -269,6 +269,34 @@ function ShowUsers($orderby, $month)
         $account_summ = $account_number - 1;
 }
 
+function ShowGroups($orderby)
+{
+	Global $db, $config, $l_tables;
+	
+	$result  = $db->query("SELECT * FROM `vpnmsgroupreply` ORDER BY `".$orderby."`");
+	$num_results = $db->Num_rows($result);
+		
+	include ('templates/' . $config['template'] . '/groups_table_header.html');
+
+	$group_number = 1;
+	
+	for ($i = 0; $i < $num_results; $i++) 
+	{
+       	$row = $db->Fetch_array($result);
+       	
+       	$gr_limit = number_format($row['limit']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+       	$bw_res = $db->query("SELECT bandwidth_name FROM `bandwidth` WHERE `bw_id` = ". $row['bandwidth']);
+       	$bw_name = $db->Fetch_array($bw_res); 
+
+       	include ('templates/' . $config['template'] . '/groups_table_body.html');
+          	
+       	$group_number++;
+    }
+	
+	include ('templates/' . $config['template'] . '/users_table_footer.html');
+	
+}
+
 function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit) {
 /*
 1 - Имя пользователя уже занято
