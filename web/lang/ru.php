@@ -80,11 +80,14 @@ $l_forms['no_net'] = "Укажите сеть.";
 $l_forms['no_mask'] = "Укажите маску сети.";
 $l_forms['err_net'] = "Ошибка при вводе сети.";
 $l_forms['err_mask'] = "Ошибка при вводе маски сети.";
+$l_forms['no_group'] = "Укажите имя группы.";
+$l_forms['group_used'] = "Это имя группы уже используется.";
 
 $l_tables['admin_del'] = "Вы действительно хотите отнять права администратора у этого пользователя?";
 $l_tables['number'] = "№";
 $l_tables['username'] = "Логин";
 $l_tables['limit'] = "Лимит";
+$l_tables['out_limit'] = "Исх. лимит";
 $l_tables['in'] = "Вход.";
 $l_tables['out'] = "Исход.";
 $l_tables['l_in'] = "Лок. вход.";
@@ -127,4 +130,8 @@ $l_tables['onl_disc'] = "Отключить";
 $l_tables['onl_summ_data'] = "Суммарная загрузка канала:";
 $l_tables['onl_summ_in'] = "Скорость входящая";
 $l_tables['onl_summ_out'] = "Скорость исходящая";
+$l_tables['speed'] = "Скорость";
+$l_tables['tcp_ports'] = "TCP порты";
+$l_tables['udp_ports'] = "UDP порты";
+$l_tables['group_del'] = "Удалить эту группу?";
 ?>
