@@ -35,12 +35,146 @@ else
   			$groups = $db->Fetch_array($groups_res);
 		}
 		
-		include ('templates/' . $config['template'] . '/new_group_table.html');
-		
+		include ('templates/' . $config['template'] . '/new_group_table.html');	
 	}
 	else
 	{
+		if ( $_GET['action'] == 'groupadd' )
+		{
+			//проверяем данные
+			$billing->CheckGroupData($_POST['groupadd_group']);
+
+			//если акаунт безлимитный то обнуляем лимит
+            if ($_POST['groupadd_limit_type'] == 'unlimited') 
+            { 
+            	$_POST['groupadd_limit'] = 0; 
+            	$_POST['groupadd_out_limit'] = 0; 
+            }
+            
+            $grlimit = $_POST['groupadd_limit']*$config['mb']*$config['mb'];
+            
+            $query1 = "INSERT INTO `radius`.`vpnmsgroupreply` (
+						`id` ,
+						`groupname` ,
+						`allow_tcp_port` ,
+						`allow_udp_port` ,
+						`limit` ,
+						`out_limit` ,
+						`bandwidth` ,
+						`limit_type` ,
+						`status`
+						)
+					VALUES (
+						NULL , '". $_POST['groupadd_group'] ."', '". $_POST['groupadd_tcp'] ."', 
+						'". $_POST['groupadd_udp'] ."', '". $grlimit ."', 
+						'". $_POST['groupadd_out_limit'] ."', '". $_POST['groupadd_bw'] ."',
+						 '". $_POST['groupadd_limit_type'] ."', 'working'
+					)";
+            
+            $query2 = "INSERT INTO `radgroupreply` (
+            			`id`, 
+            			`groupname`, 
+            			`attribute`, 
+            			`op`, 
+            			`value`
+            			) 
+            		VALUES
+						(NULL, '". $_POST['groupadd_group'] ."', 'Framed-Protocol', ':=', 'PPP'),
+						(NULL, '". $_POST['groupadd_group'] ."', 'Framed-IP-Netmask', ':=', '255.255.255.255')";
+            
+            $db->query($query1);
+            $db->query($query2);
+            
+            $page->message($l_message['group_added']);
+            $page->redirect("index.php?module=Groups",$config['redirection_time']);
+		}
+		else if ( $_GET['action'] == 'edit' )
+		{
+			if (!$_GET['orderby']) 
+				$_GET['orderby']='id';
 		
+			$billing->ShowGroups($_GET['orderby'], $_GET['month']);		
+			
+		}
+		else if ($_GET['action'] == "save_edit")
+		{
+			
+		}
+		else if ( $_GET['action'] == 'edit_status' )
+		{
+			if (!$_GET['orderby']) 
+				$_GET['orderby']='id';
+		
+			$billing->ShowGroups($_GET['orderby'], $_GET['month']);		
+		
+			$res = $db->query("SELECT status FROM `vpnmsgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'");
+			$info = $db->Fetch_array($res);
+			
+			include ('templates/' . $config['template'] . '/edit_group_status_table.html');
+		}
+		else if ($_GET['action'] == "save_status_edit")
+		{
+			//Обновляем статус группы
+			$query = "UPDATE `vpnmsgroupreply` SET `status` = '". $_POST['groupedit_status'] ."' 
+			WHERE `groupname` = '". $_POST['groupedit_group'] ."'";
+			$db->query($query);
+			
+			//Обновляем статус всех пользователей группы и если надо, добавляем задание на отключение
+			$query = "SELECT `username` FROM `radusergroup` WHERE `groupname` = '". $_POST['groupedit_group'] ."'";
+			$res = $db->query($query);
+			$num_rows = $db->Num_rows($res);
+			
+			for ($i = 0; $i < $num_rows; $i++)
+			{
+				$row = $db->Fetch_array($res);
+				
+				$query = "UPDATE `radcheck` SET `status` = '". $_POST['groupedit_status'] ."' 
+				WHERE `username` = '". $row['username'] ."'";
+				$db->query($query);
+				
+				if ($_POST['groupedit_disconnect'] == 'on')
+				{
+					$query = "INSERT INTO `radius`.`work` (
+									`id` ,
+									`username` ,
+									`data` ,
+									`operation`
+								)
+								VALUES (
+									NULL , '". $row['username'] ."', '', 'kill'
+								)";
+					
+					$db->query($query);
+				}
+			}
+			
+			$page->message($l_message['group_status_ch']);
+            $page->redirect("index.php?module=Groups",$config['redirection_time']);
+		}
+		else if ($_GET['action'] == "delete")
+		{
+			//Проверяем, есть ли пользователи в этой группе.
+			$query = "SELECT username FROM `radusergroup` WHERE `groupname` = '". $_GET['GroupName'] ."'";
+			$res = $db->query($query);
+			if ($db->num_rows($res) > 0)
+			{
+				$page->message($l_message['group_del_err']);
+				$page->redirect("index.php?module=Groups",$config['redirection_time']*2);
+			}
+			else
+			{
+				$query1 = "DELETE FROM `radgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'";
+				$query2 = "DELETE FROM `vpnmsgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'";
+				
+				$db->query($query1);
+				$db->query($query2);
+				
+				$page->message($l_message['group_del']);
+				$page->redirect("index.php?module=Groups",$config['redirection_time']);
+			}
+		}
+		else
+			$page->message($l_errors['err_action']);
 	}
 }
 ?>
