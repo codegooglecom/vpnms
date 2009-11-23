@@ -47,6 +47,7 @@ window.open(theURL, '', 'width=1024, height=600, scrollbars=yes, resizable=yes')
       
       <td>     
 	  <a href=index.php?module=Groups&action=edit&GroupName=<?=$row['groupname'];?>#bottom_label><img src="templates/<?=$config['template'];?>/images/edit.gif"></a>
+	  <a href=index.php?module=Groups&action=edit_status&GroupName=<?=$row['groupname'];?>#bottom_label><img src="templates/<?=$config['template'];?>/images/status.png"></a>	  
 	  <a href=index.php?module=Groups&action=delete&GroupName=<?=$row['groupname'];?> onClick="return window.confirm('<?=$l_tables['group_del'];?>')"><img src="templates/<?=$config['template'];?>/images/delete.gif"></a>      
       </td>
     </tr>

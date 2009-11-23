@@ -84,7 +84,8 @@ class DB
 var $connect_id;
 
 function Connect () {
-        GLOBAL $config, $connect_id;
+        GLOBAL $config, $connect_id, $l_errors;
+        
         $this->connect_id = @mysql_connect($config['db_host'],$config['db_user'],$config['db_passwd']) OR 
         DIE($l_errors['db_connect_error']);
         @mysql_select_db($config['db_name'], $this->connect_id) or die(mysql_error());
@@ -356,6 +357,27 @@ $db->connect();
 $result = $db->query("SELECT * FROM `radacct` WHERE `UserName` = '".$UserName."' AND `AcctStopTime` = '0000-00-00 00:00:00'");
 $count = $db->num_rows($result);
 if ($count > 0) { return true; } else { return false; }
+}
+
+function CheckGroupData ($GroupName) 
+{
+$db = new DB ();
+$page = new Page ();
+$db->connect();
+
+if (empty($GroupName)) 
+{
+	$page->message($l_forms['no_group']);
+	exit;
+}
+
+$result = $db->query("SELECT groupname FROM `vpnmsgroupreply` WHERE `groupname` = '".$GroupName."'");
+if ($db->num_rows($result) > 0) 
+{
+	$page->message($l_forms['group_used']);
+	exit;
+}
+
 }
 
 function PersonalOpts ($UserName)
