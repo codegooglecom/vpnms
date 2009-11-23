@@ -93,12 +93,98 @@ else
 			if (!$_GET['orderby']) 
 				$_GET['orderby']='id';
 		
-			$billing->ShowGroups($_GET['orderby'], $_GET['month']);		
+			$billing->ShowGroups($_GET['orderby'], $_GET['month']);
+			
+			$res = $db->query("SELECT * FROM `vpnmsgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'");
+			$info = $db->Fetch_array($res);
+			$limit = number_format($info['limit']/($config['mb']*$config['mb']), 0, '.', ' '); 
+
+			//Составляем список скоростей
+			$bandwidth_res  = $db->query("SELECT * FROM `bandwidth`");
+			$bandwidth = $db->Fetch_array($bandwidth_res);	
+			for ($i=0; $i < $db->Num_rows($bandwidth_res); $i++)
+			{
+  				$selected = "";
+  				if ($info['bandwidth'] == $bandwidth['bw_id'])
+  					$selected = "selected";
+  				
+				$tpl_bandwidth .= "<OPTION VALUE='". $bandwidth['bw_id'] ."' ". $selected .">". $bandwidth['bandwidth_name'] ."\n";
+  				$bandwidth = $db->Fetch_array($bandwidth_res);
+			}
+			
+			include ('templates/' . $config['template'] . '/edit_group_table.html');
 			
 		}
+		/*
+		 * Сохраняем настройки группы.
+		 * Если не установлена галка перезаписать настройки, то настройки группы
+		 * применяем ко всем пользователям, если нет, то только к тем, у кого не
+		 * установлены персональные настройки.
+		 */
 		else if ($_GET['action'] == "save_edit")
 		{
+		    $user_limit = $_POST['groupedit_limit']*$config['mb']*$config['mb'];
+            $user_out_limit = $_POST['groupedit_out_limit'];
+            $user_limit_type = $_POST['groupedit_limit_type'];
+            
+		    //Если акаунт безлимитный, то обнуляем лимит и бонус
+			if ($user_limit_type == 'unlimited') 
+			{ 
+				$user_limit = 0; 
+				$user_out_limit = 0;
+			}
+					
+			//Обновляем настройки всех пользователей группы и если надо, добавляем задание на отключение
+			$query = "SELECT `username` FROM `radusergroup` WHERE `groupname` = '". $_POST['groupedit_group'] ."'";
+			$res = $db->query($query);
+			$num_rows = $db->Num_rows($res);
 			
+			for ($i = 0; $i < $num_rows; $i++)
+			{
+				$row = $db->Fetch_array($res);
+				
+				if (($billing->PersonalOpts($row['username']) == false) || ( $_POST['groupedit_rewrite'] == 'on' ))
+				{
+					$query = "UPDATE radcheck SET 
+						`allow_tcp_port` = '". $_POST['groupedit_tcp'] ."',
+						`allow_udp_port` = '". $_POST['groupedit_udp'] ."', 
+						`out_limit` = '". $user_out_limit ."',
+						`limit` = '". $user_limit ."',
+						`bandwidth` = '". $_POST['groupedit_bw'] ."', 
+						`limit_type` = '". $user_limit_type ."' 
+						WHERE `username` = '". $row['username'] ."'";
+					$db->query($query);
+					
+					if ($_POST['groupedit_disconnect'] == 'on')
+					{
+						$query = "INSERT INTO `radius`.`work` (
+										`id` ,
+										`username` ,
+										`data` ,
+										`operation`
+									)
+									VALUES (
+										NULL , '". $row['username'] ."', '', 'kill'
+									)";
+					
+						$db->query($query);
+					}
+				}
+			}
+			
+			//Обновляем настройки группы
+			$query = "UPDATE `vpnmsgroupreply` SET 
+				`allow_tcp_port` = '". $_POST['groupedit_tcp'] ."',
+				`allow_udp_port` = '". $_POST['groupedit_udp'] ."', 
+				`out_limit` = '". $user_out_limit ."',
+				`limit` = '". $user_limit ."',
+				`bandwidth` = '". $_POST['groupedit_bw'] ."', 
+				`limit_type` = '". $user_limit_type ."' 
+				WHERE `groupname` = '". $_POST['groupedit_group'] ."'";
+			$db->query($query);
+			
+			$page->message($l_message['group_opts_ch']);
+            $page->redirect("index.php?module=Groups",$config['redirection_time']);
 		}
 		else if ( $_GET['action'] == 'edit_status' )
 		{
