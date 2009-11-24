@@ -7,7 +7,7 @@ window.open(theURL, '', 'width=1024, height=600, scrollbars=yes, resizable=yes')
     <tr bgColor=ffffe1 align = center id="row" onmouseover="this.style.background='#c0c0c0';" onmouseout="this.style.background='#ffffe1';">
       <td><?=$account_number;?></td>
       <td>
-	  <a href="javascript:void(0);" onClick="fullScreen('modules/showinfo.php?UserName=<?=$row['username'];?>&month=<?=$month;?>')"><?=$row['username'];?></a>      
+	  <a href="javascript:void(0);" onClick="fullScreen('showinfo.php?UserName=<?=$row['username'];?>&month=<?=$month;?>')"><?=$row['username'];?></a>      
       </td>
       <td>
       	<? if ( $row['limit_type'] =='unlimited' ): ?> 
