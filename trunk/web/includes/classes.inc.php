@@ -22,6 +22,14 @@ function DisplayHeader ()
 	include ('templates/' . $config['template'] . '/cur_position.html');	
 }
 
+function DisplaySmallHeader ()
+{
+	GLOBAL $config;        
+	
+	include ('templates/' . $config['template'] . '/style.css');
+	include ('templates/' . $config['template'] . '/showinfo_header.html');
+}
+
 function DisplayFooter ()
 { 
 	GLOBAL $config;
@@ -296,6 +304,35 @@ function ShowGroups($orderby)
 	
 	include ('templates/' . $config['template'] . '/users_table_footer.html');
 	
+}
+
+function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
+{
+    GLOBAL $config, $user_power_admin, $l_tables;
+	
+	if (empty($orderby)) 
+    	$orderby = 'SessId';
+    	
+   	if (empty($month) OR $month == 'current') 
+	  	$month = 'sessions';
+    if ($_GET['month'] == 'last')
+       	$month = 'sessions_1';
+    if ($_GET['month'] == 'before_last')
+       	$month = 'sessions_2';
+	
+	include ('templates/' . $config['template'] . '/connects_table_header.html');
+    
+    /*
+    $result  = $db->query("SELECT * FROM `".$month."` WHERE `UserName` = '".$_GET['UserName']."' ORDER BY `".$_GET['orderby']."`");
+    $num_rows = $db->num_rows($result);
+    for ($i=0; $i < $num_rows; $i++ ) 
+    {
+    	$data = $db->Fetch_array($result);
+        include ("../template/connects_table.tpl");
+    }
+    
+    */
+	echo "</table>";
 }
 
 function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit) {

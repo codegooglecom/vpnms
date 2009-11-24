@@ -88,8 +88,12 @@ $l_forms['err_mask'] = "Ошибка при вводе маски сети.";
 $l_forms['no_group'] = "Укажите имя группы.";
 $l_forms['group_used'] = "Это имя группы уже используется.";
 $l_forms['rewrite'] = "Перезаписать перс. н-ки";
+$l_forms['close_wind'] = "Закрыть окно";
 
 $l_tables['admin_del'] = "Вы действительно хотите отнять права администратора у этого пользователя?";
+$l_tables['name'] = "Имя";
+$l_tables['lastname'] = "Фамилия";
+$l_tables['ip'] = "IP адрес";
 $l_tables['number'] = "№";
 $l_tables['username'] = "Логин";
 $l_tables['limit'] = "Лимит";
@@ -140,4 +144,13 @@ $l_tables['speed'] = "Скорость";
 $l_tables['tcp_ports'] = "TCP порты";
 $l_tables['udp_ports'] = "UDP порты";
 $l_tables['group_del'] = "Удалить эту группу?";
+$l_tables['info_about'] = "Информация о";
+$l_tables['main_about'] = "Общая информация";
+$l_tables['connections'] = "Статистика подключений";
+$l_tables['hosts_info'] = "Статистика по узлам";
+$l_tables['time_info'] = "Статистика по времени";
+$l_tables['time_info_local'] = "Статистика по времени(локальный)";
+$l_tables['start'] = "Начало";
+$l_tables['end'] = "Конец";
+$l_tables['in_online'] = "В онлайне";
 ?>
