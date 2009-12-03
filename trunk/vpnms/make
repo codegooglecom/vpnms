@@ -9,6 +9,8 @@ gcc -c vpnmsd.c
 gcc -c vpnms_functions.c
 gcc -c onconnect.c
 gcc -c ondisconnect.c
+gcc -c hourlystat.c
 gcc -o vpnmsd config.o vpnms_functions.o vpnmsd_nf_thread.o vpnmsd.o -lmysqlclient -lz -lpthread
 gcc -o onconnect config.o vpnms_functions.o onconnect.o -lmysqlclient -lz
 gcc -o ondisconnect config.o vpnms_functions.o ondisconnect.o -lmysqlclient -lz
+gcc -o hourlystat config.o vpnms_functions.o hourlystat.o -lmysqlclient -lz
