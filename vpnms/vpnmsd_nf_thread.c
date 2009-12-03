@@ -129,7 +129,6 @@ void * vpnmsd_nf_thread(void * arg)
 						else
 							last = nf_list_add(&cur, src_ip, 0, ntohl (pData->r[i].octets ), 0, 0);
 					}
-
             	}
 
             	//входящий трафик
@@ -181,9 +180,7 @@ void * vpnmsd_nf_thread(void * arg)
             	}
             }
         }
-
         pthread_mutex_unlock(&mutex);
         usleep(50);
-
     }
 }
