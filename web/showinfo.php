@@ -32,16 +32,11 @@ else
 {
 	if (empty($_GET['action']) OR $_GET['action'] == 'main')
 	{
-		$result  = $db->query("SELECT * FROM radcheck WHERE `UserName` = '".$_GET['UserName']."'");
-        $balance = $billing->balance($_GET['UserName'],$_GET['month']);
-        $info = $db->Fetch_array($result);
-        $ip = $billing->get_ip_by_name($info['username']);
-		
-        include ('templates/' . $config['template'] . '/account_info_table.html');
+		$billing->ShowMainInfo($_GET['UserName'], $_GET['month']);
 	}
 	else if ($_GET['action'] == 'connects')
 	{      	
-    	$billing->ShowConnections("qwe");   
+    	$billing->ShowConnections($_GET['UserName'], $_GET['orderby'], $_GET['month']);   
 	}
 
 include ('templates/' . $config['template'] . '/user_info_menu.html');

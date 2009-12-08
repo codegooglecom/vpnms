@@ -306,9 +306,22 @@ function ShowGroups($orderby)
 	
 }
 
+function ShowMainInfo($UserName, $month = 'current')
+{
+    GLOBAL $db, $billing, $config, $user_power_admin, $l_tables, $l_forms;
+	
+    $result  = $db->query("SELECT * FROM radcheck WHERE `UserName` = '".$UserName."'");
+    $balance = $billing->balance($UserName,$month);
+    $info = $db->Fetch_array($result);
+    $ip = $billing->get_ip_by_name($info['username']);
+    $scriptname = basename($_SERVER["SCRIPT_NAME"]);
+		
+    include ('templates/' . $config['template'] . '/account_info_table.html');
+}
+
 function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
 {
-    GLOBAL $config, $user_power_admin, $l_tables;
+    GLOBAL $db, $config, $user_power_admin, $l_tables;
 	
 	if (empty($orderby)) 
     	$orderby = 'SessId';
@@ -319,20 +332,29 @@ function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
        	$month = 'sessions_1';
     if ($_GET['month'] == 'before_last')
        	$month = 'sessions_2';
+       	
+    $scriptname = basename($_SERVER["SCRIPT_NAME"]);
 	
 	include ('templates/' . $config['template'] . '/connects_table_header.html');
     
-    /*
-    $result  = $db->query("SELECT * FROM `".$month."` WHERE `UserName` = '".$_GET['UserName']."' ORDER BY `".$_GET['orderby']."`");
+    $result  = $db->query("SELECT * FROM `".$month."` WHERE `UserName` = '".$UserName."' ORDER BY `".$orderby."`");
     $num_rows = $db->num_rows($result);
     for ($i=0; $i < $num_rows; $i++ ) 
     {
     	$data = $db->Fetch_array($result);
-        include ("../template/connects_table.tpl");
+    	$StartTime = date("Y-n-d H:i:s",$data['StartTime'] + $config['time_correction']);
+    	$StopTime = date("Y-n-d H:i:s",$data['StopTime'] + $config['time_correction']);
+    	$d = floor($data['SessionTime']/86400);
+    	$InOnline = date("$d H:i:s", mktime(0, 0, $data['SessionTime']));
+    	$InternetIn = number_format($data['InternetIn']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+    	$InternetOut = number_format($data['InternetOut']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+    	$LocalIn = number_format($data['LocalIn']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+    	$LocalOut = number_format($data['LocalOut']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+    	
+        include ('templates/' . $config['template'] . '/connects_table_body.html');
     }
-    
-    */
-	echo "</table>";
+	
+	include ('templates/' . $config['template'] . '/table_footer.html');
 }
 
 function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit) {
