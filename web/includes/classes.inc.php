@@ -315,6 +315,7 @@ function ShowMainInfo($UserName, $month = 'current')
     $info = $db->Fetch_array($result);
     $ip = $billing->get_ip_by_name($info['username']);
     $scriptname = basename($_SERVER["SCRIPT_NAME"]);
+    $bw_name = $billing->get_bw_name($info['bandwidth']);
 		
     include ('templates/' . $config['template'] . '/account_info_table.html');
 }
@@ -355,6 +356,16 @@ function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
     }
 	
 	include ('templates/' . $config['template'] . '/table_footer.html');
+}
+
+function get_bw_name ($bw_id)
+{
+	GLOBAL $db;
+	
+	$result  = $db->query("SELECT bandwidth_name FROM `bandwidth` WHERE `bw_id` = '".$bw_id."'");
+	$data = $db->Fetch_array($result);
+	
+	return $data['bandwidth_name'];
 }
 
 function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit) {
