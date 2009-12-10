@@ -1,13 +1,13 @@
 <?
-include ("includes/config.inc.php");
-include ("lang/" . $config['lang'] . ".php");
-include ("includes/classes.inc.php");
-
 //Регистрируем сессию----
 session_start();
 
 //Отключаем вывод информационных сообщений
 error_reporting(E_ERROR);
+
+include ("includes/config.inc.php");
+include ("lang/" . $config['lang'] . ".php");
+include ("includes/classes.inc.php");
 
 //Объявляем классы-------
 $page = new page();
