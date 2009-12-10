@@ -3,7 +3,7 @@
  *
  *  Created on: 31.08.2009
  *      Author: Andrey Chebotarev
- *      mail:	admin@vpnms.org
+ *        mail:	admin@vpnms.org
  */
 
 #ifndef VPNMS_H_
@@ -25,7 +25,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <time.h>
-#include <mysql/mysql.h>
+#include "/usr/local/include/mysql/mysql.h"
 #include "config.h"
 #include "vpnms_functions.h"
 #include <assert.h>

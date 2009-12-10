@@ -1,16 +1,17 @@
-#!/bin/bash
+#!/bin/sh
 
-rm -f *.o
-rm -f vpnmsd onconnect
+rm -f bin/vpnmsd bin/onconnect obin/ndisconnect bin/hourlystat
 
-gcc -c vpnmsd_nf_thread.c
-gcc -c config.c
-gcc -c vpnmsd.c
-gcc -c vpnms_functions.c
-gcc -c onconnect.c
-gcc -c ondisconnect.c
-gcc -c hourlystat.c
-gcc -o vpnmsd config.o vpnms_functions.o vpnmsd_nf_thread.o vpnmsd.o -lmysqlclient -lz -lpthread
-gcc -o onconnect config.o vpnms_functions.o onconnect.o -lmysqlclient -lz
-gcc -o ondisconnect config.o vpnms_functions.o ondisconnect.o -lmysqlclient -lz
-gcc -o hourlystat config.o vpnms_functions.o hourlystat.o -lmysqlclient -lz
+gcc -c vpnmsd_nf_thread.c -o bin/vpnmsd_nf_thread.o
+gcc -c config.c -o bin/config.o
+gcc -c vpnmsd.c -o bin/vpnmsd.o
+gcc -c vpnms_functions.c -o bin/vpnms_functions.o
+gcc -c onconnect.c -o bin/onconnect.o
+gcc -c ondisconnect.c -o bin/ondisconnect.o
+gcc -c hourlystat.c -o bin/hourlystat.o
+gcc -o bin/vpnmsd bin/config.o bin/vpnms_functions.o bin/vpnmsd_nf_thread.o bin/vpnmsd.o -lmysqlclient -lpthread
+gcc -o bin/onconnect bin/config.o bin/vpnms_functions.o bin/onconnect.o -lmysqlclient
+gcc -o bin/ondisconnect bin/config.o bin/vpnms_functions.o bin/ondisconnect.o -lmysqlclient
+gcc -o bin/hourlystat bin/config.o bin/vpnms_functions.o bin/hourlystat.o -lmysqlclient
+
+rm -f bin/*.o
