@@ -60,7 +60,7 @@ void * vpnmsd_nf_thread(void * arg)
     {
         if ( recvfrom(s, buf, NF_BUFLEN, 0, 0, 0) == -1 )
         {
-            syslog (LOG_ERR, " failed to recive data");
+            syslog (LOG_ERR, " unable to obtain data");
             StopDaemon();
         }
         pData = &buf;

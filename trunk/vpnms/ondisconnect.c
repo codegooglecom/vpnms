@@ -68,7 +68,7 @@ int main (int argc, char **argv)
 	if ( strcasecmp(check_status(username), STATUS_WORKING) == 0)
 		if (strcasecmp(balance.limit_type, LIMIT_TYPE_LIMITED) == 0 )
 		{
-			if ( (balance.limit >= balance.input) || (balance.out_limit >= balance.output) )
+			if ( (balance.input >= balance.limit) || (balance.output >= balance.out_limit) )
 			{
 				query = malloc(256);
 				sprintf(query, "UPDATE `radcheck` SET `status` = '%s' WHERE `UserName` = '%s'", STATUS_LIMIT_EXPIRE, username);

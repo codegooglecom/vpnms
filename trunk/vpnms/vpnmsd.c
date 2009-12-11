@@ -335,7 +335,7 @@ int main(int argc, char **argv)
           	        balance = check_balance(username);
           	        if ( strcasecmp(check_status(username), STATUS_WORKING) == 0)
           	        	if (strcasecmp(balance.limit_type, LIMIT_TYPE_LIMITED) == 0 )
-          	        		if ( (balance.limit >= balance.input) || (balance.out_limit >= balance.output) )
+          	        		if ( (balance.input >= balance.limit) || (balance.output >= balance.out_limit) )
           	        		{
           	        			cmd = malloc(256);
           	        			sprintf(cmd, "%s %s", vpnms_config.vars_ond, username);
