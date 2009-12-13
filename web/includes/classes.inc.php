@@ -87,6 +87,23 @@ function is_it_admin ($login) {        $db = new DB ();
         else
         	return false;}
 
+function superslashes($var)
+{
+	if(is_array($var))
+	{
+		$outvar = array();
+		
+		foreach($var as $k => $v)
+			$outvar[$k] = $this->superslashes($v);
+			
+		return $outvar;
+	}
+	else
+	{
+		return addslashes($var);
+	}
+}
+
 }
 
 class DB
@@ -105,7 +122,6 @@ function Connect () {
 function Query ($query) {
 		GLOBAL $l_errors;
 		
-		//$query = addslashes($query);
         //echo "<br> ".$query;
 		$id = mysql_query($query, $this->connect_id);
         
