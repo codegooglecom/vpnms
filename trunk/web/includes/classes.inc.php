@@ -9,6 +9,8 @@
  of the License, or (at your option) any later version.
 */
 
+if (!defined('IN_VPNMS')) exit;
+
 class Page
 {
 
@@ -366,6 +368,52 @@ function get_bw_name ($bw_id)
 	$data = $db->Fetch_array($result);
 	
 	return $data['bandwidth_name'];
+}
+
+function disconnect_user($username)
+{
+	GLOBAL $config;
+	
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $config['mpd_url']);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);	
+	curl_setopt($ch, CURLOPT_USERPWD, $config['mpd_user'].":".$config['mpd_pass']);
+
+	$parts = explode ("<TR>" ,curl_exec($ch));
+
+	for ($i = 0; $i < count($parts); $i++)
+	{
+		if (strpos($parts[$i], "auth\">". $username ."</a>") != '')
+		{
+			$part = $parts[$i];
+			break;
+		}		
+	}
+
+	if (!empty($part))
+	{
+		$parts = explode ("link\">" ,$part);
+
+		for ($i = 0; $i < count($parts); $i++)
+		{
+			if (strpos($parts[$i], "auth\">". $username ."</a>") != '')
+			{
+				$part = $parts[$i];
+				break;
+			}		
+		}
+
+		$parts = explode ("</a></TD>" ,$part);
+		$link = $parts[0];
+
+		$close_url = $config['mpd_url'] ."/cmd?link%20". $link ."&close";
+
+		curl_setopt($ch, CURLOPT_URL, $close_url);
+		curl_exec($ch);
+	}
+
+	curl_close($ch);
 }
 
 function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit) {

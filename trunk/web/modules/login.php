@@ -8,6 +8,7 @@
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
 */
+if (!defined('IN_VPNMS')) exit;
 
 if (empty($_GET["action"])) 
 	include ('templates/' . $config['template'] . '/auth_form.html');

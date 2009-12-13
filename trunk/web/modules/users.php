@@ -1,4 +1,6 @@
 <?
+if (!defined('IN_VPNMS')) exit;
+
 $db->connect();
 
 if (empty($_SESSION['session_login'])) 
@@ -242,9 +244,7 @@ else
             
             //если надо - отключаем пользователя
             if ($_POST['accountedit_disconnect'] == 'on') 
-            	$db->query("INSERT INTO `work` ( `id` , `username` , `data` , `operation` )  
-            	VALUES 
-            	('', '".$_POST['accountedit_login']."', '', 'kill')");	
+            	$billing->disconnect_user($_POST['accountedit_login']);
             
             $page->message($l_message['user_edit']);
             $page->redirect("index.php?module=Users",$config['redirection_time']);
@@ -264,12 +264,13 @@ else
             }
             else 
             {
+            	//отключаем пользователя
+            	$billing->disconnect_user($row['UserName']);
 				              
             	//узнаем баланс за все месяцы
               	$balance   = $billing->Balance($row['UserName'],'current');
               	$balance_1 = $billing->Balance($row['UserName'],'last');
-              	$balance_2 = $billing->Balance($row['UserName'],'before_last');
-              	
+              	$balance_2 = $billing->Balance($row['UserName'],'before_last');             	
 				
 	  		  	//записываем суммарный трафик в одну сессию за каждый месяц
               	$db->query("INSERT INTO sessions   (`UserName`,`InternetIn`,`InternetOut`,`LocalIn`,`LocalOut`) VALUES ('@DELETED@','".$balance['input']."','".$balance['output']."','".$balance['local_input']."','".$balance['local_output']."')");
