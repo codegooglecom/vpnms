@@ -1,4 +1,6 @@
 <?
+if (!defined('IN_VPNMS')) exit;
+
 $db->connect();
 
 if (empty($_SESSION['session_login'])) 
@@ -156,19 +158,7 @@ else
 					$db->query($query);
 					
 					if ($_POST['groupedit_disconnect'] == 'on')
-					{
-						$query = "INSERT INTO `radius`.`work` (
-										`id` ,
-										`username` ,
-										`data` ,
-										`operation`
-									)
-									VALUES (
-										NULL , '". $row['username'] ."', '', 'kill'
-									)";
-					
-						$db->query($query);
-					}
+						$billing->disconnect_user($row['username']);
 				}
 			}
 			
@@ -219,19 +209,7 @@ else
 				$db->query($query);
 				
 				if ($_POST['groupedit_disconnect'] == 'on')
-				{
-					$query = "INSERT INTO `radius`.`work` (
-									`id` ,
-									`username` ,
-									`data` ,
-									`operation`
-								)
-								VALUES (
-									NULL , '". $row['username'] ."', '', 'kill'
-								)";
-					
-					$db->query($query);
-				}
+					$billing->disconnect_user($row['username']);
 			}
 			
 			$page->message($l_message['group_status_ch']);

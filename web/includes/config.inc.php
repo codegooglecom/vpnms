@@ -19,6 +19,9 @@
     ###     ###        ###    #### ###       ###  ########
 */
 
+if (!defined('IN_VPNMS'))
+	die("");
+
 //---------------------------------------------------------
 //                DB configuration
 //---------------------------------------------------------
@@ -43,6 +46,10 @@ $config['precision'] = 2;
 $config['time_correction'] = 0;
 $config['session_ttl'] = 5 * 60;
 $config['unix_time'] = mktime();
+//mpd
+$config['mpd_url'] = "http://10.0.15.5:5006";
+$config['mpd_user'] = "admin";
+$config['mpd_pass'] = "pass";
 
 ?>
 

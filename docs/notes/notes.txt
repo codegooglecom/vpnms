@@ -10,3 +10,6 @@
 gcc -o hourlystat config.o vpnms_functions.o hourlystat.o -lmysqlclient -lz -L/usr/local/lib/mysql
 
 ************************************************************************************************************
+
+php должн быть с поддержкой curl
+

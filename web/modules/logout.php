@@ -8,6 +8,7 @@
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
 */
+if (!defined('IN_VPNMS')) exit;
 
 $_SESSION['session_login'] = "";
 

@@ -5,6 +5,8 @@ session_start();
 //Отключаем вывод информационных сообщений
 error_reporting(E_ERROR);
 
+define('IN_VPNMS', 1);
+
 include ("includes/config.inc.php");
 include ("lang/" . $config['lang'] . ".php");
 include ("includes/classes.inc.php");

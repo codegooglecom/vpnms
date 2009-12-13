@@ -1,4 +1,6 @@
 <?
+if (!defined('IN_VPNMS')) exit;
+
 $db->connect();
 
 if (empty($_SESSION['session_login'])) 
@@ -61,21 +63,9 @@ else
 	{
 		if ($_GET['action'] == "disconnect") 
 		{
-        	//Вначале проверяем, нет ли уже задания на отключение этого пользователя
-         	$result = $db->query("SELECT * FROM `work` WHERE `username` = '".$_GET['UserName']."'");
-         	$num_rows = $db->Num_Rows($result);
-            if ($num_rows > 0) 
-            {
-            	$page->message($l_message['onl_double_disc']);
-            	$page->redirect("index.php?module=OnLine",$config['redirection_time']*2);
-            }
-            else 
-            {
-            	$db->query("INSERT INTO `work` ( `id` , `UserName` , `data` , `operation` )  
-            	VALUES ( '', '".$_GET['UserName']."', '', 'kill')"); 
-            	$page->message($l_message['onl_add_disc']);
-            	$page->redirect("index.php?module=OnLine",$config['redirection_time']);
-            }
+            $billing->disconnect_user($_GET['UserName']);  
+            $page->message($l_message['onl_disc']);
+            $page->redirect("index.php?module=OnLine",$config['redirection_time']);
         }
 	}
 }

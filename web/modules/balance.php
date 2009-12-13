@@ -1,4 +1,6 @@
 <?
+if (!defined('IN_VPNMS')) exit;
+
 $db->connect();
 
 if (empty($_SESSION['session_login'])) 
