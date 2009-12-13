@@ -17,6 +17,10 @@ $db = new DB ();
 $sec = new Security ();
 $billing = new Billing ();
 
+//проверяем все входящие данные
+$_GET = $sec->superslashes($_GET);
+$_POST = $sec->superslashes($_POST);
+
 $page->DisplaySmallHeader();
 
 $db->connect();
