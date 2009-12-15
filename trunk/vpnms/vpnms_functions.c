@@ -43,6 +43,7 @@ struct s_vpnms_config LoadConfig()
 	v_config.vpnms_hourly_stat = config_get_string (config_f, "vpnms", "hourly_stat");
 	v_config.vpnms_sql_debug = config_get_string (config_f, "vpnms", "sql_debug");
 	v_config.vpnms_cmd_debug = config_get_string (config_f, "vpnms", "cmd_debug");
+	v_config.vpnms_pf_file_debug = config_get_string (config_f, "vpnms", "pf_file_debug");
 
 	v_config.vars_pfctl = config_get_string (config_f, "vars", "pfctl");
 	v_config.vars_echo = config_get_string (config_f, "vars", "echo");
@@ -312,6 +313,9 @@ int add_rules(char *username, char *if_name)
 	myint nSize;
 	MYSQL_RES	*res;
 	MYSQL_ROW	row;
+	int	pf_fd;
+	char *pf_file;
+	char *rule;
 
 	int add_rules_debug = 1;
 
@@ -373,6 +377,18 @@ int add_rules(char *username, char *if_name)
 	else
 		bandwidth_str = "";
 
+	//создаем файл с правилами
+	pf_file = malloc(512);
+	sprintf(pf_file,"/tmp/vpnms.%s", username);
+
+	pf_fd = open (pf_file, O_WRONLY | O_CREAT, 0640);
+    if (pf_fd == -1)
+    {
+    	syslog (LOG_ERR, " error in create %s", pf_file);
+    	exit(EXIT_FAILURE);
+    }
+    ftruncate(pf_fd, 0);
+
 	/*
 	 * почему-то в sprintf использование vpnms_config иногда выпадает в segmentation fault
 	 * поэтому вот такое извращение
@@ -408,19 +424,28 @@ int add_rules(char *username, char *if_name)
 		//если открыты все tcp порты, а udp не все
 		else if  (strcasecmp(tcp_ports, "*") == 0)
 		{
-			cmd = malloc(512);
-			sprintf(cmd, "%s \"pass in proto tcp from %s to any%s\" | %s -a \"vpnms/%s\" -f -",
-					echo_path, ip, bandwidth_str, pfctl_path, username);
-			exec_cmd(cmd);
+			rule = malloc(512);
+			sprintf(rule, "pass in proto tcp from %s to any%s\n",ip, bandwidth_str);
+			if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+				syslog (LOG_ERR, " error in writing to %s", pf_file);
+			free(rule);
 
 			//если udp-порты не запрещены
 			if (strcasecmp(udp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto udp from %s to any port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, udp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto udp from %s to any port %s%s\n", ip, udp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
+
+			//загружаем правила из файла и удаляем его
+			cmd = malloc(512);
+			sprintf(cmd, "%s -a \"vpnms/%s\" -f %s", pfctl_path, username, pf_file);
+			exec_cmd(cmd);
+			if (strcasecmp(vpnms_config.vpnms_pf_file_debug, "no") == 0)
+				unlink(pf_file);
 
 			//если используется прозрачный прокси, то включаем перенаправление
 			if (strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes") == 0)
@@ -434,19 +459,28 @@ int add_rules(char *username, char *if_name)
 		//если открыты все udp порты, а tcp не все
 		else if  (strcasecmp(udp_ports, "*") == 0)
 		{
-			cmd = malloc(512);
-			sprintf(cmd, "%s \"pass in proto udp from %s to any%s\" | %s -a \"vpnms/%s\" -f -",
-					echo_path, ip, bandwidth_str, pfctl_path, username);
-			exec_cmd(cmd);
+			rule = malloc(512);
+			sprintf(rule, "pass in proto udp from %s to any%s\n", ip, bandwidth_str);
+			if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+				syslog (LOG_ERR, " error in writing to %s", pf_file);
+			free(rule);
 
 			//если tcp-порты не запрещены
 			if (strcasecmp(tcp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto tcp from %s to any port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, tcp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto tcp from %s to any port %s%s\n",ip, tcp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
+
+			//загружаем правила из файла и удаляем его
+			cmd = malloc(512);
+			sprintf(cmd, "%s -a \"vpnms/%s\" -f %s", pfctl_path, username, pf_file);
+			exec_cmd(cmd);
+			if (strcasecmp(vpnms_config.vpnms_pf_file_debug, "no") == 0)
+				unlink(pf_file);
 
 			//если используется прозрачный прокси, то включаем перенаправление
 			if (strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes") == 0)
@@ -463,20 +497,28 @@ int add_rules(char *username, char *if_name)
 			//если tcp-порты не запрещены
 			if (strcasecmp(tcp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto tcp from %s to any port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, tcp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
-			}
+				rule = malloc(512);
+				sprintf(rule, "pass in proto tcp from %s to any port %s%s\n",ip, tcp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);			}
+				free(rule);
 
 			//если udp-порты не запрещены
 			if (strcasecmp(udp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto udp from %s to any port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, udp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto udp from %s to any port %s%s\n",ip, udp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
+
+			//загружаем правила из файла и удаляем его
+			cmd = malloc(512);
+			sprintf(cmd, "%s -a \"vpnms/%s\" -f %s", pfctl_path, username, pf_file);
+			exec_cmd(cmd);
+			if (strcasecmp(vpnms_config.vpnms_pf_file_debug, "no") == 0)
+				unlink(pf_file);
 
 			//если используется прозрачный прокси, то включаем перенаправление
 			if (strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes") == 0)
@@ -550,19 +592,28 @@ int add_rules(char *username, char *if_name)
 		//если открыты все tcp порты, а udp не все
 		else if  (strcasecmp(tcp_ports, "*") == 0)
 		{
-			cmd = malloc(512);
-			sprintf(cmd, "%s \"pass in proto tcp from %s to %s%s\" | %s -a \"vpnms/%s\" -f -",
-					echo_path, ip, local_subnets_pf_str, bandwidth_str, pfctl_path, username);
-			exec_cmd(cmd);
+			rule = malloc(512);
+			sprintf(rule, "pass in proto tcp from %s to %s%s\n", ip, local_subnets_pf_str, bandwidth_str);
+			if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+				syslog (LOG_ERR, " error in writing to %s", pf_file);
+			free(rule);
 
 			//если udp-порты не запрещены
 			if (strcasecmp(udp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto udp from %s to %s port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, local_subnets_pf_str, udp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto udp from %s to %s port %s%s\n", ip, local_subnets_pf_str, udp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
+
+			//загружаем правила из файла и удаляем его
+			cmd = malloc(512);
+			sprintf(cmd, "%s -a \"vpnms/%s\" -f %s", pfctl_path, username, pf_file);
+			exec_cmd(cmd);
+			if (strcasecmp(vpnms_config.vpnms_pf_file_debug, "no") == 0)
+				unlink(pf_file);
 
 			//если используется прозрачный прокси, то включаем перенаправление
 			if (strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes") == 0)
@@ -577,19 +628,28 @@ int add_rules(char *username, char *if_name)
 		//если открыты все udp порты, а tcp не все
 		else if  (strcasecmp(udp_ports, "*") == 0)
 		{
-			cmd = malloc(512);
-			sprintf(cmd, "%s \"pass in proto udp from %s to %s%s\" | %s -a \"vpnms/%s\" -f -",
-					echo_path, ip, local_subnets_pf_str, bandwidth_str, pfctl_path, username);
-			exec_cmd(cmd);
+			rule = malloc(512);
+			sprintf(rule, "pass in proto udp from %s to %s%s\n", ip, local_subnets_pf_str, bandwidth_str);
+			if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+				syslog (LOG_ERR, " error in writing to %s", pf_file);
+			free(rule);
 
 			//если tcp-порты не запрещены
 			if (strcasecmp(tcp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto tcp from %s to %s port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, local_subnets_pf_str, tcp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto tcp from %s to %s port %s%s\n", ip, local_subnets_pf_str, tcp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
+
+			//загружаем правила из файла и удаляем его
+			cmd = malloc(512);
+			sprintf(cmd, "%s -a \"vpnms/%s\" -f %s", pfctl_path, username, pf_file);
+			exec_cmd(cmd);
+			if (strcasecmp(vpnms_config.vpnms_pf_file_debug, "no") == 0)
+				unlink(pf_file);
 
 			//если используется прозрачный прокси, то включаем перенаправление
 			if (strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes") == 0)
@@ -607,20 +667,29 @@ int add_rules(char *username, char *if_name)
 			//если tcp-порты не запрещены
 			if (strcasecmp(tcp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto tcp from %s to %s port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, local_subnets_pf_str, tcp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto tcp from %s to %s port %s%s\n", ip, local_subnets_pf_str, tcp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
 
 			//если udp-порты не запрещены
 			if (strcasecmp(udp_ports, "-") != 0)
 			{
-				cmd = malloc(512);
-				sprintf(cmd, "%s \"pass in proto udp from %s to %s port %s%s\" | %s -a \"vpnms/%s\" -f -",
-						echo_path, ip, local_subnets_pf_str, udp_ports, bandwidth_str, pfctl_path, username);
-				exec_cmd(cmd);
+				rule = malloc(512);
+				sprintf(rule, "pass in proto udp from %s to %s port %s%s\n", ip, local_subnets_pf_str, udp_ports, bandwidth_str);
+				if ( write(pf_fd, rule, strlen(rule) ) == -1 )
+					syslog (LOG_ERR, " error in writing to %s", pf_file);
+				free(rule);
 			}
+
+			//загружаем правила из файла и удаляем его
+			cmd = malloc(512);
+			sprintf(cmd, "%s -a \"vpnms/%s\" -f %s", pfctl_path, username, pf_file);
+			exec_cmd(cmd);
+			if (strcasecmp(vpnms_config.vpnms_pf_file_debug, "no") == 0)
+				unlink(pf_file);
 
 			//если используется прозрачный прокси, то включаем перенаправление
 			if (strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes") == 0)
