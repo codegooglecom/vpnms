@@ -66,6 +66,7 @@ struct s_vpnms_config
 	char	*vpnms_transparent_proxy;
 	char	*vpnms_sql_debug;
 	char	*vpnms_cmd_debug;
+	char	*vpnms_pf_file_debug;
 	char	*vpnms_hourly_stat;
 	unsigned int vpnms_transparent_proxy_port;
 
