@@ -35,6 +35,7 @@ void * vpnmsd_nf_thread(void * arg)
     char buf[NF_BUFLEN];
     char src_ip[17], dst_ip[17];
     char *query;
+    char *flows_table;
 
     if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
     {
@@ -90,9 +91,15 @@ void * vpnmsd_nf_thread(void * arg)
                     //Добавляем поток в базу, для ежечасного парсинга
                     if ( 0 == strcasecmp(vpnms_config.vpnms_hourly_stat, "yes") )
                     {
+                        if(is_it_local(dst_ip))
+                        	flows_table = "flows_local";
+                        else
+                        	flows_table = "flows";
+
                         query = malloc(512);
-              	        sprintf(query,
-              	        		"INSERT INTO `radius`.`flows` ("
+
+                        sprintf(query,
+              	        		"INSERT INTO `%s` ("
               	        		"`TimeStamp` ,"
               	        		"`Owner` ,"
               	        		"`SrcIp` ,"
@@ -104,7 +111,7 @@ void * vpnmsd_nf_thread(void * arg)
               	        		"VALUES ("
               	        		" %lu, '%s', '%s', %u, '%s', %u, %u"
               	        		")",
-              	        		(unsigned long)time(NULL), username_by_ip(src_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		flows_table, (unsigned long)time(NULL), username_by_ip(src_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
               	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ));
               	        exec_query(query);
                     }
@@ -137,9 +144,14 @@ void * vpnmsd_nf_thread(void * arg)
                     //Добавляем поток в базу, для ежечасного парсинга
                     if ( 0 == strcasecmp(vpnms_config.vpnms_hourly_stat, "yes") )
                     {
-                        query = malloc(512);
+                        if(is_it_local(dst_ip))
+                        	flows_table = "flows_local";
+                        else
+                        	flows_table = "flows";
+
+                    	query = malloc(512);
               	        sprintf(query,
-              	        		"INSERT INTO `radius`.`flows` ("
+              	        		"INSERT INTO `%s` ("
               	        		"`TimeStamp` ,"
               	        		"`Owner` ,"
               	        		"`SrcIp` ,"
@@ -151,7 +163,7 @@ void * vpnmsd_nf_thread(void * arg)
               	        		"VALUES ("
               	        		" %lu, '%s', '%s', %u, '%s', %u, %u"
               	        		")",
-              	        		(unsigned long)time(NULL), username_by_ip(dst_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		flows_table, (unsigned long)time(NULL), username_by_ip(dst_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
               	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ));
               	        exec_query(query);
                     }

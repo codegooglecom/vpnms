@@ -68,6 +68,7 @@ struct s_vpnms_config
 	char	*vpnms_cmd_debug;
 	char	*vpnms_pf_file_debug;
 	char	*vpnms_hourly_stat;
+	int		vpnms_time_correction;
 	unsigned int vpnms_transparent_proxy_port;
 
 	char	*vars_pfctl;
@@ -120,6 +121,7 @@ extern pthread_mutex_t	mutex;
 extern int nf_thread_initialized;
 extern int waiting_mutex;
 //extern MYSQL mysql;
+unsigned long int timestamp;
 
 int is_it_local (char *ip);
 int is_it_vpn (char *ip, char *mask, char *net);
