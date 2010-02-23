@@ -6,9 +6,24 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
 int main()
 {
-	printf("str: %u\n", inet_addr("255.255.240.0"));
+	unsigned int		min;
+	unsigned int		sec;
+	time_t				t;
+	struct tm			*gm;
+	unsigned long int timestamp;
+
+	t = time(NULL);
+	gm = gmtime(&t);
+	min = gm->tm_min;
+	sec = gm->tm_sec;
+
+	timestamp = (unsigned long)time(NULL);
+	timestamp = timestamp - min*60 - sec;
+
+	printf("tm: %ld\n", timestamp);
 	return 0;
 }

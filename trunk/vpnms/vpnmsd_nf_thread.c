@@ -36,6 +36,7 @@ void * vpnmsd_nf_thread(void * arg)
     char src_ip[17], dst_ip[17];
     char *query;
     char *flows_table;
+    int local_flow;
 
     if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
     {
@@ -91,28 +92,27 @@ void * vpnmsd_nf_thread(void * arg)
                     //Добавляем поток в базу, для ежечасного парсинга
                     if ( 0 == strcasecmp(vpnms_config.vpnms_hourly_stat, "yes") )
                     {
-                        if(is_it_local(dst_ip))
-                        	flows_table = "flows_local";
-                        else
-                        	flows_table = "flows";
+                    	local_flow = 0;
+                    	if(is_it_local(dst_ip)) local_flow = 1;
 
                         query = malloc(512);
 
                         sprintf(query,
-              	        		"INSERT INTO `%s` ("
+              	        		"INSERT INTO `flows` ("
               	        		"`TimeStamp` ,"
               	        		"`Owner` ,"
               	        		"`SrcIp` ,"
               	        		"`SrcPort` ,"
               	        		"`DstIp` ,"
               	        		"`DstPort`, "
-              	        		"`Bytes`"
+              	        		"`Bytes`, "
+                        		"`Local`"
               	        		") "
               	        		"VALUES ("
-              	        		" %lu, '%s', '%s', %u, '%s', %u, %u"
+              	        		" %lu, '%s', '%s', %u, '%s', %u, %u, %u"
               	        		")",
-              	        		flows_table, (unsigned long)time(NULL), username_by_ip(src_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
-              	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ));
+              	        		(unsigned long)time(NULL), username_by_ip(src_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
               	        exec_query(query);
                     }
           	        //----
@@ -144,27 +144,26 @@ void * vpnmsd_nf_thread(void * arg)
                     //Добавляем поток в базу, для ежечасного парсинга
                     if ( 0 == strcasecmp(vpnms_config.vpnms_hourly_stat, "yes") )
                     {
-                        if(is_it_local(dst_ip))
-                        	flows_table = "flows_local";
-                        else
-                        	flows_table = "flows";
+                    	local_flow = 0;
+                    	if(is_it_local(src_ip)) local_flow = 1;
 
                     	query = malloc(512);
               	        sprintf(query,
-              	        		"INSERT INTO `%s` ("
+              	        		"INSERT INTO `flows` ("
               	        		"`TimeStamp` ,"
               	        		"`Owner` ,"
               	        		"`SrcIp` ,"
               	        		"`SrcPort` ,"
               	        		"`DstIp` ,"
               	        		"`DstPort`, "
-              	        		"`Bytes`"
+              	        		"`Bytes`, "
+              	        		"`Local`"
               	        		") "
               	        		"VALUES ("
-              	        		" %lu, '%s', '%s', %u, '%s', %u, %u"
+              	        		" %lu, '%s', '%s', %u, '%s', %u, %u, %u"
               	        		")",
-              	        		flows_table, (unsigned long)time(NULL), username_by_ip(dst_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
-              	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ));
+              	        		(unsigned long)time(NULL), username_by_ip(dst_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
               	        exec_query(query);
                     }
           	        //----
