@@ -10,7 +10,6 @@
 myint hourly_sum_bytes (char *port, char *mode, char *direction, unsigned long int StartTime, unsigned long int EndTime, char *username)
 {
 	char				*query;
-	char				*table;
 	char				*colum;
 	char				*port_dst;
 	MYSQL_RES			*res;
@@ -19,27 +18,13 @@ myint hourly_sum_bytes (char *port, char *mode, char *direction, unsigned long i
 
 	query = malloc(1024);
 
-	if (0 == strcasecmp (mode, "input"))
+	if ( (0 == strcasecmp (mode, "input")) || (0 == strcasecmp (mode, "local_input")) )
 	{
-		table = "flows";
 		colum = "DstIp";
 		port_dst = "SrcPort";
 	}
-	if (0 == strcasecmp (mode, "output"))
+	if ( (0 == strcasecmp (mode, "output")) || (0 == strcasecmp (mode, "local_output")) )
 	{
-		table = "flows";
-		colum = "SrcIp";
-		port_dst = "DstPort";
-	}
-	if (0 == strcasecmp (mode, "local_input"))
-	{
-		table = "flows_local";
-		colum = "DstIp";
-		port_dst = "SrcPort";
-	}
-	if (0 == strcasecmp (mode, "local_output"))
-	{
-		table = "flows_local";
 		colum = "SrcIp";
 		port_dst = "DstPort";
 	}
@@ -52,25 +37,25 @@ myint hourly_sum_bytes (char *port, char *mode, char *direction, unsigned long i
 	if (0 == strcasecmp (port, "all"))
 	{
 		sprintf(query,
-			"SELECT SUM(Bytes) AS Bytes FROM `%s` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu AND `Owner` = '%s' AND `%s` LIKE '10.%%.%%.%%' AND `local` = %u",
-			table, StartTime, EndTime, username, colum, local_flow
+			"SELECT SUM(Bytes) AS Bytes FROM `flows` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu AND `Owner` = '%s' AND `%s` LIKE '10.%%.%%.%%' AND `local` = %u",
+			StartTime, EndTime, username, colum, local_flow
 			);
 	}
 	else if (0 == strcasecmp (port, "other"))
 	{
 		sprintf(query,
-			"SELECT SUM(Bytes) AS Bytes FROM `%s` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu AND `Owner` = '%s' AND `%s` LIKE '10.%%.%%.%%' "
+			"SELECT SUM(Bytes) AS Bytes FROM `flows` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu AND `Owner` = '%s' AND `%s` LIKE '10.%%.%%.%%' "
 			"AND %s != 80 AND %s != 443 AND %s != 22 AND %s != 5190 AND %s != 25 AND %s != 465 AND %s != 110 AND %s != 995 AND %s != 143 AND %s != 993 "
 			"AND %s != 585 AND %s != 53 AND `local` = %u",
-			table, StartTime, EndTime, username, colum, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst,
+			StartTime, EndTime, username, colum, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst, port_dst,
 			port_dst, port_dst, local_flow
 			);
 	}
 	else
 	{
 		sprintf(query,
-			"SELECT SUM(Bytes) AS Bytes FROM `%s` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu AND `Owner` = '%s' AND `%s` LIKE '10.%%.%%.%%' AND `%s` = %s AND `local` = %u",
-			table, StartTime, EndTime, username, colum, port_dst, port, local_flow
+			"SELECT SUM(Bytes) AS Bytes FROM `flows` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu AND `Owner` = '%s' AND `%s` LIKE '10.%%.%%.%%' AND `%s` = %s AND `local` = %u",
+			StartTime, EndTime, username, colum, port_dst, port, local_flow
 			);
 	}
 
@@ -193,7 +178,6 @@ int main ()
 					"`IMAPS` ,"
 					"`IMAPSSL` ,"
 					"`DNS` ,"
-					"`FTP` ,"
 					"`other` ,"
 					"`all` ,"
 					"`direction` ,"
@@ -201,7 +185,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'input', '0', '1'"
+					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'input', '0', '1'"
 				");",
 				timestamp, username, HTTPin, HTTPSin, SSHin, ICQin, SMTPin, SSMTPin, POP3in, POP3Sin, IMAPin, IMAPSin, IMAPSSLin, DNSin, OTHERin, ALLin);
 
@@ -225,7 +209,6 @@ int main ()
 					"`IMAPS` ,"
 					"`IMAPSSL` ,"
 					"`DNS` ,"
-					"`FTP` ,"
 					"`other` ,"
 					"`all` ,"
 					"`direction` ,"
@@ -233,7 +216,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'output', '0', '1'"
+					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'output', '0', '1'"
 				");",
 				timestamp, username, HTTPout, HTTPSout, SSHout, ICQout, SMTPout, SSMTPout, POP3out, POP3Sout, IMAPout, IMAPSout, IMAPSSLout, DNSout, OTHERout, ALLout);
 
@@ -289,7 +272,6 @@ int main ()
 					"`IMAPS` ,"
 					"`IMAPSSL` ,"
 					"`DNS` ,"
-					"`FTP` ,"
 					"`other` ,"
 					"`all` ,"
 					"`direction` ,"
@@ -297,7 +279,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'input', '1', '1'"
+					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'input', '1', '1'"
 				");",
 				timestamp, username, HTTPin, HTTPSin, SSHin, ICQin, SMTPin, SSMTPin, POP3in, POP3Sin, IMAPin, IMAPSin, IMAPSSLin, DNSin, OTHERin, ALLin);
 
@@ -321,7 +303,6 @@ int main ()
 					"`IMAPS` ,"
 					"`IMAPSSL` ,"
 					"`DNS` ,"
-					"`FTP` ,"
 					"`other` ,"
 					"`all` ,"
 					"`direction` ,"
@@ -329,7 +310,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'output', '1', '1'"
+					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'output', '1', '1'"
 				");",
 				timestamp, username, HTTPout, HTTPSout, SSHout, ICQout, SMTPout, SSMTPout, POP3out, POP3Sout, IMAPout, IMAPSout, IMAPSSLout, DNSout, OTHERout, ALLout);
 
@@ -346,7 +327,6 @@ int main ()
 
     	//чистим память
     	free(username);
-
     }
 
 	return 0;
