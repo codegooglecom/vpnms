@@ -44,11 +44,11 @@ struct s_vpnms_config LoadConfig()
 	v_config.vpnms_sql_debug = config_get_string (config_f, "vpnms", "sql_debug");
 	v_config.vpnms_cmd_debug = config_get_string (config_f, "vpnms", "cmd_debug");
 	v_config.vpnms_pf_file_debug = config_get_string (config_f, "vpnms", "pf_file_debug");
-	v_config.vpnms_time_correction = config_get_int (config_f, "vpnms", "time_correction");
 
 	v_config.vars_pfctl = config_get_string (config_f, "vars", "pfctl");
 	v_config.vars_echo = config_get_string (config_f, "vars", "echo");
 	v_config.vars_ond = config_get_string (config_f, "vars", "ond");
+	v_config.vars_mpd_rc_script = config_get_string (config_f, "vars", "mpd_rc_script");
 
 	return v_config;
 }
