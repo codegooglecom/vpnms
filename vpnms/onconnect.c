@@ -65,8 +65,8 @@ int main (int argc, char **argv)
 	//открываем сессию
 	query = malloc(512);
 	sprintf(query, "INSERT INTO `sessions` ( `SessId` , `UserName` , `StartTime` , `StopTime` , `SessionTime`,`InternetIn` , `InternetOut` , "
-			"`LocalIn` , `LocalOut` , `FramedIpAddress` , `Interface`, `Connected`)"
-			" VALUES ('', '%s', '%ld', '0', '0', '0', '0', '0', '0', '%s', '%s', '1')"
+			"`LocalIn` , `LocalOut` , `FramedIpAddress` , `Interface`, `Connected`, `Rotation`)"
+			" VALUES ('', '%s', '%ld', '0', '0', '0', '0', '0', '0', '%s', '%s', '1', '1')"
 			, username, (unsigned long)time(NULL), v_ip, if_name);
 	exec_query(query);
 

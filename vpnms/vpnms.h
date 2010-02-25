@@ -29,9 +29,10 @@
 #include "config.h"
 #include "vpnms_functions.h"
 #include <assert.h>
+#include <curl/curl.h>
 
 #define VERSION "1.0.0 "
-#define REVISION "22"
+#define REVISION "33"
 #define PIDFILE "/var/run/vpnmsd.pid"
 #define CONFIGFILE "/usr/local/etc/vpnms.conf"
 
@@ -68,12 +69,12 @@ struct s_vpnms_config
 	char	*vpnms_cmd_debug;
 	char	*vpnms_pf_file_debug;
 	char	*vpnms_hourly_stat;
-	int		vpnms_time_correction;
 	unsigned int vpnms_transparent_proxy_port;
 
 	char	*vars_pfctl;
 	char	*vars_echo;
 	char	*vars_ond;
+	char	*vars_mpd_rc_script;
 };
 
 #define NF_BUFLEN 2048
