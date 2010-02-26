@@ -29,7 +29,6 @@
 #include "config.h"
 #include "vpnms_functions.h"
 #include <assert.h>
-#include <curl/curl.h>
 
 #define VERSION "1.0.0 "
 #define REVISION "33"
