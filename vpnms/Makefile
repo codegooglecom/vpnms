@@ -1,17 +1,34 @@
-vpnmsd: config.o vpnms_functions.o vpnmsd.o
-	gcc -o vpnmsd config.o vpnms_functions.o vpnmsd_nf_thread.o vpnmsd.o -lmysqlclient -lz -lpthread
+CC=gcc
+#CCFLAGS=-Wall
+
+vpnmsd: monthlyreset.o hourlystat.o vpnmsd.o vpnmsd_nf_thread.o config.o vpnms_functions.o onconnect.o ondisconnect.o
+
+onconnect: config.o vpnms_functions.o onconnect.o
+	${CC} ${CCFLAGS} -c $< -lmysqlclient -lz -lpthread
+
+vpnmsd.o: vpnmsd.c
+	${CC} ${CCFLAGS} -c $<
+
+vpnmsd_nf_thread.o: vpnmsd_nf_thread.c
+	${CC} ${CCFLAGS} -c $<
+
+config.o: config.c
+	${CC} ${CCFLAGS} -c $<
 
 vpnms_functions.o: vpnms_functions.c
-	gcc -c vpnms_functions.c
-	
-vpnmsd.o: vpnmsd.c
-	gcc -c vpnmsd.c	
+	${CC} ${CCFLAGS} -c $<
 
-config.o: config.c config.h
-	gcc -c config.c
+onconnect.o: onconnect.c
+	${CC} ${CCFLAGS} -c $<
 
-vpnmsd_nf_thread.o: vpnmsd_nf_thread1.c
-	gcc -c vpnmsd_nf_threadss.c
+ondisconnect.o: ondisconnect.c
+	${CC} ${CCFLAGS} -c $<
+
+monthlyreset.o: monthlyreset.c
+	${CC} ${CCFLAGS} -c $<
+
+hourlystat.o: hourlystat.c
+	${CC} ${CCFLAGS} -c $<
 
 clean:
 	rm -f *.o
