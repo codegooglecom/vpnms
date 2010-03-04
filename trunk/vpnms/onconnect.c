@@ -21,7 +21,6 @@ int main (int argc, char **argv)
 	char 		*username;
 	char 		*query;
 	MYSQL_RES	*res;
-	MYSQL_ROW	row;
 	int			rows = 0;
 
 	//если демон не запущен - выйти

@@ -19,5 +19,6 @@ MYSQL_RES *exec_query(char *query);
 int exec_cmd(char *cmd);
 int clear_rules(char *username);
 char *ip_by_username(char *username);
+int add_rules(char *username, char *if_name);
 
 #endif /* VPNMS_FUNCTIONS_H_ */

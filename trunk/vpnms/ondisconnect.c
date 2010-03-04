@@ -76,4 +76,6 @@ int main (int argc, char **argv)
 			}
 		}
 		free(balance.limit_type);
+
+		return 0;
 }

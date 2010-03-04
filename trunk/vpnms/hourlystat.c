@@ -185,7 +185,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'input', '0', '1'"
+					"NULL , %lu, '%s', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', 'input', '0', '1'"
 				");",
 				timestamp, username, HTTPin, HTTPSin, SSHin, ICQin, SMTPin, SSMTPin, POP3in, POP3Sin, IMAPin, IMAPSin, IMAPSSLin, DNSin, OTHERin, ALLin);
 
@@ -216,7 +216,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'output', '0', '1'"
+					"NULL , %lu, '%s', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', 'output', '0', '1'"
 				");",
 				timestamp, username, HTTPout, HTTPSout, SSHout, ICQout, SMTPout, SSMTPout, POP3out, POP3Sout, IMAPout, IMAPSout, IMAPSSLout, DNSout, OTHERout, ALLout);
 
@@ -279,7 +279,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'input', '1', '1'"
+					"NULL , %lu, '%s', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', 'input', '1', '1'"
 				");",
 				timestamp, username, HTTPin, HTTPSin, SSHin, ICQin, SMTPin, SSMTPin, POP3in, POP3Sin, IMAPin, IMAPSin, IMAPSSLin, DNSin, OTHERin, ALLin);
 
@@ -310,7 +310,7 @@ int main ()
 					"`rotation`"
 				") "
 				"VALUES ("
-					"NULL , %lld, '%s', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', '%lld', 'output', '1', '1'"
+					"NULL , %lu, '%s', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', '%llu', 'output', '1', '1'"
 				");",
 				timestamp, username, HTTPout, HTTPSout, SSHout, ICQout, SMTPout, SSMTPout, POP3out, POP3Sout, IMAPout, IMAPSout, IMAPSSLout, DNSout, OTHERout, ALLout);
 
