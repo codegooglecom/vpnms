@@ -70,6 +70,20 @@ void nf_list_destroy(LLIST **n)
 	*n = NULL;
 }
 
+int ShowConfig()
+{
+	vpnms_config = LoadConfig();
+	printf("\n[mysql]\nhost = %s\nusername = %s\npassword = %s\ndatabase = %s\nport = %u\n\n[vpnms]\nclose_console = %s\ndaemon_interval = %u\n"
+			"network = %s\nnetmask = %s\naltq = %s\ntransparent_proxy = %s\ntransparent_proxy_port = %u\nhourly_stat = %s\nsql_debug = %s\n"
+			"cmd_debug = %s\npf_file_debug = %s\n\n[vars]\npfctl = %s\necho = %s\nond = %s\nmpd_rc_script = %s\n\n",
+			vpnms_config.mysql_host, vpnms_config.mysql_username, vpnms_config.mysql_password, vpnms_config.mysql_database, vpnms_config.mysql_port,
+			vpnms_config.vpnms_close_console, vpnms_config.vpnms_daemon_interval, vpnms_config.vpnms_network, vpnms_config.vpnms_netmask, vpnms_config.vpnms_altq,
+			vpnms_config.vpnms_transparent_proxy, vpnms_config.vpnms_transparent_proxy_port, vpnms_config.vpnms_hourly_stat, vpnms_config.vpnms_sql_debug,
+			vpnms_config.vpnms_cmd_debug, vpnms_config.vpnms_pf_file_debug, vpnms_config.vars_pfctl, vpnms_config.vars_echo, vpnms_config.vars_ond, vpnms_config.vars_mpd_rc_script);
+
+	return 0;
+}
+
 LLIST	*cur = NULL;
 LLIST	*last = NULL;
 
@@ -82,7 +96,7 @@ int						waiting_mutex = 0;
 
 int main(int argc, char **argv)
 {
-        static int 				opt, pidfd, tmp;
+        static int 			opt, pidfd;
         pid_t 					pid, sid;
         char 					chpid[6];
         char 					rpid[6];
@@ -94,12 +108,9 @@ int main(int argc, char **argv)
     	pthread_t				nf_thread;
     	LLIST					*cur_copy = NULL;
     	LLIST					*last_copy = NULL;
-    	myint					sum_in = 0;
-    	time_t 					now;
     	unsigned long int		cycle_start_time;
     	unsigned long int		SessionTime;
     	struct s_balance		balance;
-    	MYSQL 					mysql;
     	myint					SessId;
     	unsigned long int		SpeedIn;
     	unsigned long int		SpeedOut;
@@ -112,17 +123,19 @@ int main(int argc, char **argv)
         		"-s, --start	to start the daemon.\n"
         		"-x, --stop	to stop the daemon.\n"
         		"-v, --version	to show version.\n"
+        		"-c, --showconfig to show config.\n"
         		"-h, --help	to show help.\n";
 
         const struct option opts[] = {
         		{"start", no_argument, NULL, 's'},
         		{"stop", no_argument, NULL, 'x'},
         		{"version", no_argument, NULL, 'v'},
+        		{"showconfig", no_argument, NULL, 'c'},
         		{"help", no_argument, NULL, 'h'},
         		{NULL, 0, NULL, 0}
         };
 
-        while ((opt = getopt_long(argc, argv, "sxvh:", opts, NULL)) != -1) {
+        while ((opt = getopt_long(argc, argv, "sxvch:", opts, NULL)) != -1) {
                 switch (opt) {
                 case 'h':
 						printf("%s", help_str);
@@ -150,6 +163,9 @@ int main(int argc, char **argv)
 				        	exit(EXIT_FAILURE);
 						}
 						exit(EXIT_SUCCESS);
+
+                case 'c':
+						ShowConfig();
 
                 case 's':
 						break;

@@ -12,6 +12,19 @@ short received_kill_sig = 0;
 
 void StopDaemon()
 {
+	char				*query;
+	char				*cmd;
+	MYSQL_RES			*res;
+	MYSQL_ROW			row;
+
+	//очистить правила марушрутизации
+	query = malloc(64);
+	sprintf(query,"SELECT `UserName` FROM `sessions` WHERE `Connected` = '1'");
+	res = exec_query(query);
+	while (row = mysql_fetch_row(res))
+		clear_rules(row[0]);
+	mysql_free_result(res);
+
 	unlink(PIDFILE);
 	syslog (LOG_NOTICE, " stopped");
 	exit(EXIT_SUCCESS);
@@ -21,34 +34,89 @@ struct s_vpnms_config LoadConfig()
 {
 	struct s_vpnms_config v_config;
 	config_context_t *config_f;
-
-	config_f = config_open(CONFIGFILE);
+	int pidfd;
 
 	//инициализируем дефолтные значения
+	v_config.mysql_host = "localhost";
+	v_config.mysql_username = "vpnms";
+	v_config.mysql_password = "pass";
+	v_config.mysql_database = "vpnms";
+	v_config.mysql_port = 3306;
 
+	v_config.vpnms_close_console = "yes";
+	v_config.vpnms_daemon_interval = 10;
+	v_config.vpnms_network = "10.10.1.0";
+	v_config.vpnms_netmask = "255.255.0.0";
+	v_config.vpnms_altq = "no";
+	v_config.vpnms_transparent_proxy = "no";
+	v_config.vpnms_transparent_proxy_port = 3128;
+	v_config.vpnms_hourly_stat = "no";
+	v_config.vpnms_sql_debug = "no";
+	v_config.vpnms_cmd_debug = "no";
+	v_config.vpnms_pf_file_debug = "no";
 
-	v_config.mysql_host = config_get_string (config_f, "mysql", "host");
-	v_config.mysql_username = config_get_string (config_f, "mysql", "username");
-	v_config.mysql_password = config_get_string (config_f, "mysql", "password");
-	v_config.mysql_database = config_get_string (config_f, "mysql", "database");
-	v_config.mysql_port = config_get_int (config_f, "mysql", "port");
+	v_config.vars_pfctl = "/sbin/pfctl";
+	v_config.vars_echo = "/bin/echo";
+	v_config.vars_ond = "/usr/local/sbin/ondisconnect";
+	v_config.vars_mpd_rc_script = "/usr/local/etc/rc.d/mpd5";
+	//--
 
-	v_config.vpnms_close_console = config_get_string (config_f, "vpnms", "close_console");
-	v_config.vpnms_daemon_interval = config_get_int (config_f, "vpnms", "daemon_interval");
-	v_config.vpnms_network = config_get_string (config_f, "vpnms", "network");
-	v_config.vpnms_netmask = config_get_string (config_f, "vpnms", "netmask");
-	v_config.vpnms_altq = config_get_string (config_f, "vpnms", "altq");
-	v_config.vpnms_transparent_proxy = config_get_string (config_f, "vpnms", "transparent_proxy");
-	v_config.vpnms_transparent_proxy_port = config_get_int (config_f, "vpnms", "transparent_proxy_port");
-	v_config.vpnms_hourly_stat = config_get_string (config_f, "vpnms", "hourly_stat");
-	v_config.vpnms_sql_debug = config_get_string (config_f, "vpnms", "sql_debug");
-	v_config.vpnms_cmd_debug = config_get_string (config_f, "vpnms", "cmd_debug");
-	v_config.vpnms_pf_file_debug = config_get_string (config_f, "vpnms", "pf_file_debug");
+	pidfd = open (CONFIGFILE, O_RDONLY);
 
-	v_config.vars_pfctl = config_get_string (config_f, "vars", "pfctl");
-	v_config.vars_echo = config_get_string (config_f, "vars", "echo");
-	v_config.vars_ond = config_get_string (config_f, "vars", "ond");
-	v_config.vars_mpd_rc_script = config_get_string (config_f, "vars", "mpd_rc_script");
+	if (pidfd == -1)
+	{
+		printf("Warning: Config file not found! Loading defaults.\n");
+		syslog (LOG_WARNING, " Config file not found! Loading defaults.\n");
+	}
+	else
+	{
+		config_f = config_open(CONFIGFILE);
+
+		if (config_get_string (config_f, "mysql", "host") != NULL)
+			v_config.mysql_host = config_get_string (config_f, "mysql", "host");
+		if (config_get_string (config_f, "mysql", "username") != NULL)
+			v_config.mysql_username = config_get_string (config_f, "mysql", "username");
+		if (config_get_string (config_f, "mysql", "password") != NULL)
+			v_config.mysql_password = config_get_string (config_f, "mysql", "password");
+		if (config_get_string (config_f, "mysql", "database") != NULL)
+			v_config.mysql_database = config_get_string (config_f, "mysql", "database");
+		if (config_get_int (config_f, "mysql", "port") != 0)
+			v_config.mysql_port = config_get_int (config_f, "mysql", "port");
+
+		if (config_get_string (config_f, "vpnms", "close_console") != NULL)
+			v_config.vpnms_close_console = config_get_string (config_f, "vpnms", "close_console");
+		if (config_get_int (config_f, "vpnms", "daemon_interval") != 0)
+			v_config.vpnms_daemon_interval = config_get_int (config_f, "vpnms", "daemon_interval");
+		if (config_get_string (config_f, "vpnms", "network") != NULL)
+			v_config.vpnms_network = config_get_string (config_f, "vpnms", "network");
+		if (config_get_string (config_f, "vpnms", "netmask") != NULL)
+			v_config.vpnms_netmask = config_get_string (config_f, "vpnms", "netmask");
+		if (config_get_string (config_f, "vpnms", "altq") != NULL)
+			v_config.vpnms_altq = config_get_string (config_f, "vpnms", "altq");
+		if (config_get_string (config_f, "vpnms", "transparent_proxy") != NULL)
+			v_config.vpnms_transparent_proxy = config_get_string (config_f, "vpnms", "transparent_proxy");
+		if (config_get_int (config_f, "vpnms", "transparent_proxy_port") != 0)
+			v_config.vpnms_transparent_proxy_port = config_get_int (config_f, "vpnms", "transparent_proxy_port");
+		if (config_get_string (config_f, "vpnms", "hourly_stat") != NULL)
+			v_config.vpnms_hourly_stat = config_get_string (config_f, "vpnms", "hourly_stat");
+		if (config_get_string (config_f, "vpnms", "sql_debug") != NULL)
+			v_config.vpnms_sql_debug = config_get_string (config_f, "vpnms", "sql_debug");
+		if (config_get_string (config_f, "vpnms", "cmd_debug") != NULL)
+			v_config.vpnms_cmd_debug = config_get_string (config_f, "vpnms", "cmd_debug");
+		if (config_get_string (config_f, "vpnms", "pf_file_debug") != NULL)
+			v_config.vpnms_pf_file_debug = config_get_string (config_f, "vpnms", "pf_file_debug");
+
+		if (config_get_string (config_f, "vars", "pfctl") != NULL)
+			v_config.vars_pfctl = config_get_string (config_f, "vars", "pfctl");
+		if (config_get_string (config_f, "vars", "echo") != NULL)
+			v_config.vars_echo = config_get_string (config_f, "vars", "echo");
+		if (config_get_string (config_f, "vars", "ond") != NULL)
+			v_config.vars_ond = config_get_string (config_f, "vars", "ond");
+		if (config_get_string (config_f, "vars", "mpd_rc_script") != NULL)
+			v_config.vars_mpd_rc_script = config_get_string (config_f, "vars", "mpd_rc_script");
+	}
+
+	close(pidfd);
 
 	return v_config;
 }
@@ -113,6 +181,8 @@ int exec_cmd(char *cmd)
 
 	system(cmd);
 	free(cmd);
+
+	return 0;
 }
 
 char *username_by_ip(char *ip)
@@ -186,7 +256,6 @@ long long int get_sess_id(char *username)
 	char 		*query;
 	MYSQL_RES	*res;
 	MYSQL_ROW	row;
-	char		*id;
 	myint		SessId;
 
 	query = malloc(256);
@@ -277,9 +346,12 @@ int clear_rules(char *username)
 	sprintf(cmd, "%s -a \"%s/%s\" -F rules", vpnms_config.vars_pfctl, PF_VPNMS_ANCHOR, username);
 	exec_cmd(cmd);
 
-	cmd = malloc(512);
-	sprintf(cmd, "%s -a \"%s/%s\" -F nat", vpnms_config.vars_pfctl, PF_VPNMSP_ANCHOR, username);
-	exec_cmd(cmd);
+	if ( 0 == strcasecmp(vpnms_config.vpnms_transparent_proxy, "yes"))
+	{
+		cmd = malloc(512);
+		sprintf(cmd, "%s -a \"%s/%s\" -F nat", vpnms_config.vars_pfctl, PF_VPNMSP_ANCHOR, username);
+		exec_cmd(cmd);
+	}
 
 	cmd = malloc(512);
 	sprintf(cmd, "%s -k %s", vpnms_config.vars_pfctl, ip_by_username(username));
@@ -304,7 +376,6 @@ int add_rules(char *username, char *if_name)
 	char *bandwidth;
 	char *bandwidth_id;
 	char *bandwidth_str;
-	char *test;
 	char *echo_path;
 	char *pfctl_path;
 	char *local_subnets_pf_str;
@@ -317,8 +388,6 @@ int add_rules(char *username, char *if_name)
 	int	pf_fd;
 	char *pf_file;
 	char *rule;
-
-	int add_rules_debug = 1;
 
 	status = check_status(username);
 	if ( status == NULL )

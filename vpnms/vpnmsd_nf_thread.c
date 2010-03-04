@@ -35,7 +35,6 @@ void * vpnmsd_nf_thread(void * arg)
     char buf[NF_BUFLEN];
     char src_ip[17], dst_ip[17];
     char *query;
-    char *flows_table;
     int local_flow;
 
     if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
