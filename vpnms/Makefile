@@ -70,4 +70,13 @@ install:
 	cp ${BINDIR}/ondisconnect ${INSTSBIN}/ondisconnect
 	cp ${BINDIR}/monthlyreset ${INSTSBIN}/monthlyreset
 	cp ${BINDIR}/vpnmsd ${INSTSBIN}/vpnmsd
+	cp onconnect.sh ${INSTSBIN}/onconnect.sh
+	cp ondisconnect.sh ${INSTSBIN}/ondisconnect.sh
 	cp config.cfg ${CNFINSTDIR}/vpnms.conf
+	chmod 755 ${INSTBIN}/hourlystat
+	chmod 744 ${INSTBIN}/onconnect
+	chmod 744 ${INSTBIN}/ondisconnect
+	chmod 744 ${INSTBIN}/monthlyreset
+	chmod 744 ${INSTBIN}/vpnmsd
+	chmod 744 ${INSTBIN}/onconnect.sh
+	chmod 744 ${INSTBIN}/ondisconnect.sh

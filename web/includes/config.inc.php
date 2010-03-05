@@ -26,7 +26,7 @@ if (!defined('IN_VPNMS'))
 //                DB configuration
 //---------------------------------------------------------
 $config['db_name'] = "radius";
-$config['db_host'] = "localhost";
+$config['db_host'] = "10.0.15.5";
 $config['db_user'] = "root";
 $config['db_passwd'] = "";
 
