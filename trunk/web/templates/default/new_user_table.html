@@ -143,6 +143,11 @@ function personal_opts()
 	}
 }
 
+function chng_month()
+{
+	
+}
+
 </script>
 
 
@@ -360,7 +365,19 @@ function personal_opts()
     </SELECT>
 	</td>
 	<td width=17%>
-
+	
+	<select name="Map" onChange="{
+       for (var i=0; i < this.length; i++) {
+       if (this.options[i].selected) {
+       if (i!=0) {
+       top.window.location=this.options[i].value;
+        break;} } } } ">
+        <option selected value="#"><?=$l_forms['month'];?>:
+        <option value="index.php?module=Users&month=current"><?=$l_forms['current'];?>
+        <option value="index.php?module=Users&month=last"><?=$l_forms['last'];?>
+        <option value="index.php?module=Users&month=before_last"><?=$l_forms['before_last'];?>
+    </select>
+        
 	</td>
 	<td width=10%>
 

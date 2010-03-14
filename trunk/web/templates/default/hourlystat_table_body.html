@@ -1,0 +1,18 @@
+<tr bgColor=f5f5f5 align = center id="row" onmouseover="this.style.background='#c0c0c0';" onmouseout="this.style.background='#f5f5f5';">
+      <td align=center><? echo "<a href=index.php?module=State&action=$_GET[action]&day=$i>$i</a>"; ?></td>
+      <td align=center><? if ($http['bt'] > 0) echo number_format($http['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($https['bt'] > 0) echo number_format($https['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($ssh['bt'] > 0) echo number_format($ssh['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($icq['bt'] > 0) echo number_format($icq['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($smtp['bt'] > 0) echo number_format($smtp['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($ssmtp['bt'] > 0) echo number_format($ssmtp['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($pop3['bt'] > 0) echo number_format($pop3['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($pop3s['bt'] > 0) echo number_format($pop3s['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($imap['bt'] > 0) echo number_format($imap['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($imaps['bt'] > 0) echo number_format($imaps['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($imapssl['bt'] > 0) echo number_format($imapssl['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($dns['bt'] > 0) echo number_format($dns['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($other['bt'] > 0) echo number_format($other['bt']/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+      <td align=center><? if ($all > 0) echo number_format($all/($mb*$mb), $precision, '.', ' '); else echo '.'; ?></td>
+ </tr>
+ 

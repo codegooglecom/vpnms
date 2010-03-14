@@ -83,9 +83,20 @@ else
             		VALUES
 						(NULL, '". $_POST['groupadd_group'] ."', 'Framed-Protocol', ':=', 'PPP'),
 						(NULL, '". $_POST['groupadd_group'] ."', 'Framed-IP-Netmask', ':=', '255.255.255.255')";
+
+            $query3 = "INSERT INTO `radgroupcheck` (
+            			`id`, 
+            			`groupname`, 
+            			`attribute`, 
+            			`op`, 
+            			`value`
+            			) 
+            		VALUES
+						(NULL, '". $_POST['groupadd_group'] ."', 'Auth-Type', ':=', '". $_POST['groupadd_auth_type'] ."')";           
             
             $db->query($query1);
             $db->query($query2);
+            $db->query($query3);
             
             $page->message($l_message['group_added']);
             $page->redirect("index.php?module=Groups",$config['redirection_time']);
@@ -98,8 +109,11 @@ else
 			$billing->ShowGroups($_GET['orderby'], $_GET['month']);
 			
 			$res = $db->query("SELECT * FROM `vpnmsgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'");
+			$auth_res = $db->query("SELECT `value` FROM `radgroupcheck` WHERE `groupname` = '". $_GET['GroupName'] ."' AND `attribute` = 'Auth-Type'");
 			$info = $db->Fetch_array($res);
-			$limit = number_format($info['limit']/($config['mb']*$config['mb']), 0, '.', ' '); 
+			$auth_info = $db->Fetch_array($auth_res);
+			$limit = number_format($info['limit']/($config['mb']*$config['mb']), 0, '.', ' ');
+			$info['auth_type'] = $auth_info['value'];
 
 			//Составляем список скоростей
 			$bandwidth_res  = $db->query("SELECT * FROM `bandwidth`");
@@ -172,6 +186,11 @@ else
 				`limit_type` = '". $user_limit_type ."' 
 				WHERE `groupname` = '". $_POST['groupedit_group'] ."'";
 			$db->query($query);
+
+			$query = "UPDATE `radgroupcheck` SET 
+				`value` = '". $_POST['groupedit_auth_type'] ."' 
+				WHERE `groupname` = '". $_POST['groupedit_group'] ."' AND `attribute` = 'Auth-Type'";
+			$db->query($query);		
 			
 			$page->message($l_message['group_opts_ch']);
             $page->redirect("index.php?module=Groups",$config['redirection_time']);
@@ -229,9 +248,11 @@ else
 			{
 				$query1 = "DELETE FROM `radgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'";
 				$query2 = "DELETE FROM `vpnmsgroupreply` WHERE `groupname` = '". $_GET['GroupName'] ."'";
+				$query3 = "DELETE FROM `radgroupcheck` WHERE `groupname` = '". $_GET['GroupName'] ."'";
 				
 				$db->query($query1);
 				$db->query($query2);
+				$db->query($query3);
 				
 				$page->message($l_message['group_del']);
 				$page->redirect("index.php?module=Groups",$config['redirection_time']);

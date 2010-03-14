@@ -178,17 +178,17 @@ Function Balance ($UserName,$month='current') {
          						);
 
          if ($month == 'last') 
-         	$month = 'sessions_1';
+         	$rotation = '2';
          else if ($month == 'before_last')
-         	$month = 'sessions_2';
+         	$rotation = '3';
          else
-         	$month = 'sessions';
+         	$rotation = '1';
 
          $db = new DB ();
 
 		 $query1 = "SELECT SUM( InternetIn )  AS 'input',SUM( InternetOut ) AS 'output',
 		 SUM( LocalIn )  AS 'local_input', SUM( LocalOut ) AS 'local_output' 
-		 FROM `".$month."` WHERE `UserName` = '".$UserName."'";
+		 FROM `sessions` WHERE `UserName` = '".$UserName."' AND `Rotation` = '".$rotation."'";
          
          $query2 = "SELECT * FROM radcheck WHERE `UserName` = '".$UserName."'";
          $query3 = "SELECT `groupname` FROM `radusergroup` WHERE `UserName` = '".$UserName."'";
@@ -311,6 +311,10 @@ function ShowGroups($orderby)
 	{
        	$row = $db->Fetch_array($result);
        	
+       	//выбираем тип авторизации
+       	$auth_res  = $db->query("SELECT `Value` FROM `radgroupcheck` WHERE `Attribute` = 'Auth-Type' AND `GroupName` = '".$row['groupname']."'");
+       	$auth_row = $db->Fetch_array($auth_res);
+       	
        	$gr_limit = number_format($row['limit']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
        	$bw_res = $db->query("SELECT bandwidth_name FROM `bandwidth` WHERE `bw_id` = ". $row['bandwidth']);
        	$bw_name = $db->Fetch_array($bw_res); 
@@ -346,17 +350,17 @@ function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
     	$orderby = 'SessId';
     	
    	if (empty($month) OR $month == 'current') 
-	  	$month = 'sessions';
-    if ($_GET['month'] == 'last')
-       	$month = 'sessions_1';
-    if ($_GET['month'] == 'before_last')
-       	$month = 'sessions_2';
-       	
+	  	$rotation = '1';
+    if ($month == 'last') 
+       	$rotation = '2';
+    if ($month == 'before_last')
+        $rotation = '3';
+         	       	
     $scriptname = basename($_SERVER["SCRIPT_NAME"]);
 	
 	include ('templates/' . $config['template'] . '/connects_table_header.html');
     
-    $result  = $db->query("SELECT * FROM `".$month."` WHERE `UserName` = '".$UserName."' ORDER BY `".$orderby."`");
+    $result  = $db->query("SELECT * FROM `sessions` WHERE `UserName` = '".$UserName."' AND `Rotation` = '".$rotation."' ORDER BY `".$orderby."`");
     $num_rows = $db->num_rows($result);
     for ($i=0; $i < $num_rows; $i++ ) 
     {
@@ -374,6 +378,48 @@ function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
     }
 	
 	include ('templates/' . $config['template'] . '/table_footer.html');
+}
+
+function ShowHourlyStat ($UserName, $month = 'current')
+{
+	GLOBAL $db, $config, $l_tables;
+	
+    //таймстемп начала текущего месяца
+	$timestamp = time() - ( (date(j) - 1)*24*60*60) - date(G)*60*60 - date(i)*60 - date(s);
+	
+	if (empty($month) OR $month == 'current')
+	{ 
+	  	$rotation = '1';
+	  	$days = date(d);
+	}	
+    if ($month == 'last')
+    { 
+       	$rotation = '2';
+       	$days = date(t, strtotime("-1 month"));
+    }
+    if ($month == 'before_last')
+    {
+        $rotation = '3';
+        $days = date(t, strtotime("-2 month"));
+    }
+
+	//Входящий
+	include ('templates/' . $config['template'] . '/hourlystat_table_header.html');
+	include ('templates/' . $config['template'] . '/hourlystat_table_body.html');	
+	include ('templates/' . $config['template'] . '/table_footer.html');
+    
+    //date("Z") - часовой пояс
+	$day = 5;
+	//echo strtotime(date("$day F Y")) + date("Z");
+	//echo strtotime(date("$day F Y"));
+    //echo strtotime("14 March 2010");
+    //echo date("13 F Y Z");
+    
+	$day_timestamp =  strtotime(date("$day F Y"));
+	
+	$sql = "SELECT SUM( HTTP ) AS 'http' FROM `hourlystat` WHERE `owner` = '".$UserName."' AND `timestamp` > ".$day_timestamp." AND `timestamp` < ".($day_timestamp + 86400);
+	echo $sql;
+    
 }
 
 function get_bw_name ($bw_id)

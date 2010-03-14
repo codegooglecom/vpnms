@@ -179,6 +179,25 @@ function limit_type()
 	<td width=5%>
 	</td>
 	<td width=15%>
+	<?=$l_forms['auth_type'];?>
+	</td>
+	<td width=50%>
+	<SELECT NAME=groupedit_auth_type>
+            <OPTION VALUE='PAP' <? if($info['auth_type'] == 'PAP'): ?>SELECTED<? endif; ?>>PAP
+            <OPTION VALUE='CHAP' <? if($info['auth_type'] == 'CHAP'): ?>SELECTED<? endif; ?>>CHAP
+            <OPTION VALUE='MS-CHAP' <? if($info['auth_type'] == 'MS-CHAP'): ?>SELECTED<? endif; ?>>MS-CHAP
+    </SELECT>
+	</td>
+	<td width=17%>
+	</td>
+	<td width=10%>
+	</td>
+	<td width=3%></td>
+</tr>
+<tr>
+	<td width=5%>
+	</td>
+	<td width=15%>
 	<?=$l_forms['speed'];?>
 	</td>
 	<td width=50%>
