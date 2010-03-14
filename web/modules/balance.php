@@ -18,6 +18,10 @@ else
 	{
 		$billing->ShowConnections($_SESSION['session_login']);
 	}
+	else if ($_GET['action'] == 'hourlystat')
+	{
+		$billing->ShowHourlyStat($_SESSION['session_login']);
+	}
 	else if ($_GET['action'] == 'change_pass')
 	{
 		include ('templates/' . $config['template'] . '/user_change_pass.html');
