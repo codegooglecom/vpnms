@@ -4,7 +4,6 @@
 CC=gcc
 CCFLAGS=-L/usr/local/lib/mysql -Wall
 BINDIR=bin
-RCDDIR=rc.d
 INSTBIN=/usr/local/bin
 INSTSBIN=/usr/local/sbin
 CNFINSTDIR=/usr/local/etc
@@ -74,13 +73,10 @@ install:
 	cp onconnect.sh ${INSTSBIN}/onconnect.sh
 	cp ondisconnect.sh ${INSTSBIN}/ondisconnect.sh
 	cp config.cfg ${CNFINSTDIR}/vpnms.conf
-	cp ${RCDDIR}/vpnmsd /usr/local/etc/rc.d/vpnmsd
 	chmod 755 ${INSTBIN}/hourlystat
-	chmod 744 ${INSTSBIN}/onconnect
-	chmod 744 ${INSTSBIN}/ondisconnect
-	chmod 744 ${INSTSBIN}/monthlyreset
-	chmod 744 ${INSTSBIN}/vpnmsd
-	chmod 744 ${INSTSBIN}/onconnect.sh
-	chmod 744 ${INSTSBIN}/ondisconnect.sh
-	chmod 744 /usr/local/etc/rc.d/vpnmsd
-
+	chmod 744 ${INSTBIN}/onconnect
+	chmod 744 ${INSTBIN}/ondisconnect
+	chmod 744 ${INSTBIN}/monthlyreset
+	chmod 744 ${INSTBIN}/vpnmsd
+	chmod 744 ${INSTBIN}/onconnect.sh
+	chmod 744 ${INSTBIN}/ondisconnect.sh
