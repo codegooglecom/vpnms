@@ -120,21 +120,22 @@ int main(int argc, char **argv)
 
         char help_str[] =
         		"Usage: vpnmsd [OPTION]\n"
-        		"without options start the daemon.\n"
-        		"-s, --stop	to stop the daemon.\n"
+        		"-s, --start	to start the daemon.\n"
+        		"-x, --stop	to stop the daemon.\n"
         		"-v, --version	to show version.\n"
         		"-c, --showconfig to show config.\n"
         		"-h, --help	to show help.\n";
 
         const struct option opts[] = {
-        		{"stop", no_argument, NULL, 's'},
+        		{"start", no_argument, NULL, 's'},
+        		{"stop", no_argument, NULL, 'x'},
         		{"version", no_argument, NULL, 'v'},
         		{"showconfig", no_argument, NULL, 'c'},
         		{"help", no_argument, NULL, 'h'},
         		{NULL, 0, NULL, 0}
         };
 
-        while ((opt = getopt_long(argc, argv, "svch:", opts, NULL)) != -1) {
+        while ((opt = getopt_long(argc, argv, "sxvch:", opts, NULL)) != -1) {
                 switch (opt) {
                 case 'h':
 						printf("%s", help_str);
@@ -144,7 +145,7 @@ int main(int argc, char **argv)
 						printf("VPNMS version %s revision %s\nAuthor: Andrey Chebotarev\nMail: admin@vpnms.org\nVPNMS 2005-2010\n", VERSION, REVISION);
 						exit(EXIT_SUCCESS);
 
-                case 's':
+                case 'x':
 						pidfd = open(PIDFILE, O_RDONLY);
 						if (pidfd == -1)
 				        {
@@ -165,15 +166,18 @@ int main(int argc, char **argv)
 
                 case 'c':
 						ShowConfig();
-						exit(EXIT_SUCCESS);
 
-//                default:
-//						break;
+                case 's':
+						break;
+
+                default:
+						printf("%s", help_str);
+						exit(EXIT_SUCCESS);
                 }
         }
 
-//        if (argc < 2)
-//        	printf("%s", help_str);
+        if (argc < 2)
+        	printf("%s", help_str);
 
         //check vpnmsd
         if ( check_daemon() == 1)
