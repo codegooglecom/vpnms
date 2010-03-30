@@ -22,7 +22,7 @@ int main()
 	sec = gm->tm_sec;
 
 	timestamp = (unsigned long)time(NULL);
-	timestamp = timestamp - min*60 - sec;
+//	timestamp = timestamp - min*60 - sec;
 
 	printf("tm: %ld\n", timestamp);
 	return 0;
