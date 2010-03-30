@@ -22,6 +22,10 @@ else
 	{
 		$billing->ShowHourlyStat($_SESSION['session_login']);
 	}
+	else if ($_GET['action'] == 'hosts')
+	{
+		$billing->ShowWWWStat($_SESSION['session_login']);
+	}
 	else if ($_GET['action'] == 'change_pass')
 	{
 		include ('templates/' . $config['template'] . '/user_change_pass.html');

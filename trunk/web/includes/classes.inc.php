@@ -536,6 +536,54 @@ for ($j=1; $j <= 4; $j++)
 	   
 }
 
+function ShowWWWStat ($UserName, $month = 'current')
+{
+	GLOBAL $config, $l_tables;
+	
+	if (empty($month) OR $month == 'current')
+	{ 
+	  	$days = date(d);
+	  	$month = date(F);
+	  	$year = date(Y);
+	}	
+    if ($month == 'last')
+    { 
+       	$n=date("j");
+		$n=intval($n);
+		$n=time()-$n*86400+1;
+
+		$days=date("j",$n);
+       	$month=date("F",$n);
+       	$year=date("Y",$n);
+    }
+    if ($month == 'before_last')
+    {
+        $time=time();
+        $n=date("j");
+		$n=intval($n);
+		$n=$time-$n*86400+1;
+        $days=date("j",$n);
+        $n=$n-$days*86400;
+
+        $days=date("j",$n);
+       	$month=date("F",$n);
+       	$year=date("Y",$n);
+    }
+    
+
+    //общая статистика по дням
+    include ('templates/' . $config['template'] . '/hosts_main_header.html');
+    
+    for ($i=1; $i <= $days; $i++)
+    {
+    	$rep_path = $config['reports_path'].date("Ymd",strtotime("$i $month $year"));
+		
+    	//echo $rep_path."<br>";
+    }
+	
+    include ('templates/' . $config['template'] . '/table_footer.html');
+}
+
 function get_bw_name ($bw_id)
 {
 	GLOBAL $db;

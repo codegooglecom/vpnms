@@ -170,4 +170,7 @@ $l_tables['input'] = "Входящий";
 $l_tables['output'] = "Исходящий";
 $l_tables['loc_input'] = "Локальный входящий";
 $l_tables['loc_output'] = "Локальный исходящий";
+$l_tables['time'] = "Время";
+$l_tables['connects'] = "Соединений";
+$l_tables['bytes'] = "Байт";
 ?>
