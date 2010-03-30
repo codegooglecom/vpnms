@@ -44,6 +44,10 @@ else
 	{      	
     	$billing->ShowConnections($_GET['UserName'], $_GET['orderby'], $_GET['month']);   
 	}
+	else if ($_GET['action'] == 'hourlystat')
+	{
+		$billing->ShowHourlyStat($_GET['UserName'], $_GET['month']);
+	}
 
 include ('templates/' . $config['template'] . '/user_info_menu.html');
 include ('templates/' . $config['template'] . '/showinfo_footer.html');

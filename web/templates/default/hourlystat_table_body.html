@@ -1,5 +1,12 @@
 <tr bgColor=f5f5f5 align = center id="row" onmouseover="this.style.background='#c0c0c0';" onmouseout="this.style.background='#f5f5f5';">
-      <td align=center><a href=index.php?module=Balance&action=<?=$_GET[action];?>&day=<?=$i;?>><?=$cur_date;?></a></td>
+      <td align=center>
+      	<? if ($_GET['module'] == 'Balance'): ?>
+      	<a href=index.php?module=Balance&action=<?=$_GET[action];?>&day=<?=$i;?>><?=$cur_date;?></a>
+      	<? endif; ?>
+      	<? if ($_GET['action'] == 'hourlystat'): ?>
+      	<a href=showinfo.php?UserName=<?=$_GET['UserName'];?>&month=<?=$_GET['month'];?>&action=<?=$_GET[action];?>&day=<?=$i;?>><?=$cur_date;?></a>
+      	<? endif; ?>
+      </td>
       
       <td align=center>
       	<? if ($http != 0): ?><?=$http;?><? endif; ?>
