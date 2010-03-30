@@ -3,3 +3,8 @@
 
 2) Поглядеть возможности ng_car(в mpd5) по нарезанию трафика
 
+3) Посмотреть на тему возможности использовать pppoe вместо/вместе pptp
+http://www.lissyara.su/articles/freebsd/traffic_count/mpd5_pppoe+radius+ng_car+abills/
+
+
+

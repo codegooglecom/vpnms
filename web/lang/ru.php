@@ -167,4 +167,7 @@ $l_tables['hour'] = "Час";
 $l_tables['other'] = "Другое";
 $l_tables['sum_all'] = "Всего";
 $l_tables['input'] = "Входящий";
+$l_tables['output'] = "Исходящий";
+$l_tables['loc_input'] = "Локальный входящий";
+$l_tables['loc_output'] = "Локальный исходящий";
 ?>

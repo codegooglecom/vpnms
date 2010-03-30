@@ -383,43 +383,157 @@ function ShowConnections($UserName, $orderby = 'SessId', $month = 'current')
 function ShowHourlyStat ($UserName, $month = 'current')
 {
 	GLOBAL $db, $config, $l_tables;
-	
-    //таймстемп начала текущего месяца
-	$timestamp = time() - ( (date(j) - 1)*24*60*60) - date(G)*60*60 - date(i)*60 - date(s);
+
+	/*
+	 *  $days - кол-во дней в месяце 
+	 */
 	
 	if (empty($month) OR $month == 'current')
 	{ 
 	  	$rotation = '1';
 	  	$days = date(d);
+	  	$month = date(F);
+	  	$year = date(Y);
 	}	
     if ($month == 'last')
     { 
        	$rotation = '2';
-       	$days = date(t, strtotime("-1 month"));
+       	
+       	$n=date("j");
+		$n=intval($n);
+		$n=time()-$n*86400+1;
+
+		$days=date("j",$n);
+       	$month=date("F",$n);
+       	$year=date("Y",$n);
     }
     if ($month == 'before_last')
     {
         $rotation = '3';
-        $days = date(t, strtotime("-2 month"));
+
+        $time=time();
+        $n=date("j");
+		$n=intval($n);
+		$n=$time-$n*86400+1;
+        $days=date("j",$n);
+        $n=$n-$days*86400;
+
+        $days=date("j",$n);
+       	$month=date("F",$n);
+       	$year=date("Y",$n);
     }
 
-	//Входящий
-	include ('templates/' . $config['template'] . '/hourlystat_table_header.html');
-	include ('templates/' . $config['template'] . '/hourlystat_table_body.html');	
-	include ('templates/' . $config['template'] . '/table_footer.html');
-    
-    //date("Z") - часовой пояс
-	$day = 5;
-	//echo strtotime(date("$day F Y")) + date("Z");
-	//echo strtotime(date("$day F Y"));
-    //echo strtotime("14 March 2010");
-    //echo date("13 F Y Z");
-    
-	$day_timestamp =  strtotime(date("$day F Y"));
+//в цикле, входящий, исходящий, лок. вх., лок. исх.
+for ($j=1; $j <= 4; $j++)
+{    
+	switch ($j) {
+		case 1:
+			$title = $l_tables['input'];
+			$direction = "input";
+			$local = '0';
+			break;
+		case  2:
+			$title = $l_tables['output'];
+			$direction = "output";
+			$local = '0';
+			break;
+		case  3:
+			$title = $l_tables['loc_input'];
+			$direction = "input";
+			$local = '1';
+			break;
+		case  4:
+			$title = $l_tables['loc_output'];
+			$direction = "output";
+			$local = '1';
+			break;
+	}
 	
-	$sql = "SELECT SUM( HTTP ) AS 'http' FROM `hourlystat` WHERE `owner` = '".$UserName."' AND `timestamp` > ".$day_timestamp." AND `timestamp` < ".($day_timestamp + 86400);
-	echo $sql;
-    
+	include ('templates/' . $config['template'] . '/hourlystat_table_header.html');
+	
+	if (empty($_GET['day']))
+	{
+		$cnt = $days;
+	}
+	
+	else if (preg_match("/^[0-9]{1,2}$/" ,$_GET['day']))
+	{
+		$start_hour = 0;
+		$cnt = 24;
+	}
+	
+	/*
+	 *  Если отображаем за день статистику, то $i - день
+	 *  Если за каждый час, то $i - час
+	 */
+	
+	for ($i=1; $i <= $cnt; $i++)
+	{
+		if (empty($_GET['day']))
+		{
+			$cur_date = $i." ".$month." ".$year;
+			
+			$day_timestamp =  strtotime("$i $month $year");
+			$period_start = $day_timestamp;
+			$period_end = $day_timestamp + 86400;
+			
+			$sql_add = "AND `timestamp` >= ".$period_start." AND `timestamp` <= ".$period_end;
+		}
+		else if (preg_match("/^[0-9]{1,2}$/" ,$_GET['day']))
+		{
+			$cur_date = $start_hour."-".++$start_hour;
+			
+			$day = $_GET['day'];
+			$period = strtotime("$i:00 $day $month $year");
+			$sql_add = "AND `timestamp` = ".$period;
+		}
+		
+		$sql = "SELECT 
+				SUM( HTTP )	AS 'http',  
+				SUM( HTTPS ) AS 'https',
+				SUM( SSH ) AS 'ssh',
+				SUM( ICQ ) AS 'icq',
+				SUM( SMTP ) AS 'smtp',
+				SUM( SSMTP ) AS 'ssmtp',
+				SUM( POP3 ) AS 'pop3',
+				SUM( POP3S ) AS 'pop3s',
+				SUM( IMAP ) AS 'imap',
+				SUM( IMAPS ) AS 'imaps',
+				SUM( IMAPSSL ) AS 'imapssl',
+				SUM( DNS ) AS 'dns',
+				SUM( other ) AS 'other',
+				SUM( `all` ) AS 'all' 
+ 			
+				FROM `hourlystat` 
+				WHERE `owner` = '".$UserName."' 
+				AND `direction` = '".$direction."'
+				AND `local` = '".$local."' ".$sql_add;
+		
+		$result  = $db->query($sql);
+		$bytes = $db->Fetch_array($result);
+		
+		$http = number_format($bytes['http']/($config['mb']*$config['mb']), $config['precision'], '.', ' '); 
+		$https = number_format($bytes['https']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$ssh = number_format($bytes['ssh']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$icq = number_format($bytes['icq']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$smtp = number_format($bytes['smtp']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$ssmtp = number_format($bytes['ssmtp']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$pop3 = number_format($bytes['pop3']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$pop3s = number_format($bytes['pop3s']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$imap = number_format($bytes['imap']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$imaps = number_format($bytes['imaps']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$imapssl = number_format($bytes['imapssl']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$dns = number_format($bytes['dns']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$other = number_format($bytes['other']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		$all = number_format($bytes['all']/($config['mb']*$config['mb']), $config['precision'], '.', ' ');
+		
+		include ('templates/' . $config['template'] . '/hourlystat_table_body.html');
+		//echo $sql."<br><br>";
+	}	
+	
+	include ('templates/' . $config['template'] . '/table_footer.html');
+}
+	   
 }
 
 function get_bw_name ($bw_id)
@@ -661,16 +775,16 @@ return $http_main_stat;
 }
 
 function bytes_format($bytes,$mode='main') {include "config.inc.php";
-if ($mode == 'main') {	if ($bytes <  $mb ) $bytes = $bytes.' B';
-	if ( ($bytes >= $mb )     	  AND ($bytes < $mb*$mb) ) 	   	   $bytes = number_format($bytes/($mb), $precision, '.', ' ').' KB';
-	if ( ($bytes >= $mb*$mb ) 	  AND ($bytes < $mb*$mb*$mb) ) 	   $bytes = number_format($bytes/($mb*$mb), $precision, '.', ' ').' MB';
-	if ( ($bytes >= $mb*$mb*$mb ) AND ($bytes < $mb*$mb*$mb*$mb) ) $bytes = number_format($bytes/($mb*$mb*$mb), $precision, '.', ' ').' GB';
+if ($mode == 'main') {	if ($bytes <  $config['mb'] ) $bytes = $bytes.' B';
+	if ( ($bytes >= $config['mb'] )     	  AND ($bytes < $config['mb']*$config['mb']) ) 	   	   $bytes = number_format($bytes/($config['mb']), $config['precision'], '.', ' ').' KB';
+	if ( ($bytes >= $config['mb']*$config['mb'] ) 	  AND ($bytes < $config['mb']*$config['mb']*$config['mb']) ) 	   $bytes = number_format($bytes/($config['mb']*$config['mb']), $config['precision'], '.', ' ').' MB';
+	if ( ($bytes >= $config['mb']*$config['mb']*$config['mb'] ) AND ($bytes < $config['mb']*$config['mb']*$config['mb']*$config['mb']) ) $bytes = number_format($bytes/($config['mb']*$config['mb']*$config['mb']), $config['precision'], '.', ' ').' GB';
 
 }
 
 if ($mode == 'time') {
-	if ($bytes < 100*$mb*$mb) 	   	   $bytes = number_format($bytes/($mb*$mb), 1, '.', ' ').'M';
-	if ($bytes >= 100*$mb*$mb ) 	   $bytes = number_format($bytes/($mb*$mb*$mb), 1, '.', ' ').'G';
+	if ($bytes < 100*$config['mb']*$config['mb']) 	   	   $bytes = number_format($bytes/($config['mb']*$config['mb']), 1, '.', ' ').'M';
+	if ($bytes >= 100*$config['mb']*$config['mb'] ) 	   $bytes = number_format($bytes/($config['mb']*$config['mb']*$config['mb']), 1, '.', ' ').'G';
 }
 
 
