@@ -538,7 +538,7 @@ for ($j=1; $j <= 4; $j++)
 
 function ShowWWWStat ($UserName, $month = 'current')
 {
-	GLOBAL $config, $l_tables;
+	GLOBAL $config, $l_tables, $navbar;
 	
 	if (empty($month) OR $month == 'current')
 	{ 
@@ -570,18 +570,70 @@ function ShowWWWStat ($UserName, $month = 'current')
        	$year=date("Y",$n);
     }
     
+    $script_parts = explode("/",$_SERVER['PHP_SELF']);
+    $script_name = $script_parts[sizeof($script_parts)-1];
 
     //общая статистика по дням
+    if (empty($_GET['day']))
+    {
     include ('templates/' . $config['template'] . '/hosts_main_header.html');
     
     for ($i=1; $i <= $days; $i++)
     {
     	$rep_path = $config['reports_path'].date("Ymd",strtotime("$i $month $year"));
+    	$cur_date = $i." ".$month." ".$year;
+    	$host_bytes = 0;
+    	$host_connects = 0;
+    	
+    	@ $file = fopen($rep_path.'/.total',"r");
+    	
+    	if ( $file <> false )
+    	{
+    		while ($data = fgets ($file, 1000)) 
+    		{
+  				//удаляем все лишние пробелы
+    			$data = preg_replace("/(\s+)/", " ",$data);
+  				
+    			$data_parts = explode(" ",$data);
+    			
+				if ($data_parts[0] == $UserName) 
+				{
+					$host_bytes = $data_parts[1];
+					$host_connects = $data_parts[2];
+					
+					$host_bytes = $this->bytes_format($host_bytes);
+					break;
+				}
+  			}
+    	}
 		
     	//echo $rep_path."<br>";
+    	include ('templates/' . $config['template'] . '/hosts_main_body_usr.html');
     }
 	
     include ('templates/' . $config['template'] . '/table_footer.html');
+    }
+    //********************************
+    else if (preg_match("/^[0-9]{1,2}$/" ,$_GET['day']))
+    {
+    	if ($_GET['subaction'] == 'main')
+    	{
+			include ('templates/' . $config['template'] . '/sites_main_report_header.php');
+			
+			include ('templates/' . $config['template'] . '/table_footer.html');
+    	}
+    	
+    	if ($_GET['subaction'] == 'bigfiles') 
+    	{
+    		
+    	}
+    	
+    	if ($_GET['subaction'] == 'time')
+    	{
+    		
+    	}
+    	
+    }    
 }
 
 function get_bw_name ($bw_id)
@@ -760,67 +812,6 @@ function PersonalOpts ($UserName)
 	return false;
 }
 
-function get_report_dir ($UserName,$day,$month='current') {//-------------------------------------------------------------------------------------------
-//-- Вычисляем путь до отчетов
-//-------------------------------------------------------------------------------------------
-
-include "config.inc.php";
-$change_year = false;
-
-//Вычисляем год
-if ($month == 'current') $year = date("Y");
-
-//Вычисляем месяц
-if ($month == 'current') $month = date("m");
-	if ($month == 'last') {
-    $month = date("n");
-    $month = $month - 1;
-     if ($month == 0) { $month = '12'; $change_year = true; }
-     if ( ($month == '1') OR ($month == '2') OR ($month == '3') OR ($month == '4') OR ($month == '5') OR ($month == '6') OR ($month == '7') OR ($month == '8') OR ($month == '9') ) $month = '0'.$month;
-	}
-
-	if ($month == 'before_last') {
-    $month = date("n");
-    $month = $month - 2;
-     if ($month == 0) { $month = '12'; $change_year = true; }
-     if ($month == -1) { $month = '12'; $change_year = true; }
-     if ( ($month == '1') OR ($month == '2') OR ($month == '3') OR ($month == '4') OR ($month == '5') OR ($month == '6') OR ($month == '7') OR ($month == '8') OR ($month == '9') ) $month = '0'.$month;
-	}
-
-//Корректируем год если надо
-if ($change_year == true) $year = $year - 1;
-
-//Вычисляем день
-if ( ($day == '1') OR ($day == '2') OR ($day == '3') OR ($day == '4') OR ($day == '5') OR ($day == '6') OR ($day == '7') OR ($day == '8') OR ($day == '9') ) $day = '0'.$day;
-
-$path = $path_to_http_reports.$year.$month.$day;
-//-------------------------------------------------------------------------------------------
-
-if ($debug == true) echo 'путь к отчетам: '.$path.'<br>';
-
-return $path;
-}
-
-function get_http_main_stat ($UserName,$day,$month='current') {include "config.inc.php";
-$path = $this->get_report_dir($UserName,$day,$month);
-
-$http_main_stat['connects'] = 0;
-$http_main_stat['bytes'] = 0;
-
-@ $file = fopen($path.'/.total',"r");
-
-$user_ip = $this->get_ip_by_name($UserName);
-
-  if ($file <> false) {
-  while ($data = fgets ($file, 1000)) {  $data = preg_replace("/(\s+)/", " ",$data);
-  $data_parts = explode(" ",$data);
-	if ($data_parts[0] == $user_ip) {	$http_main_stat['bytes'] = $data_parts[1];
-	$http_main_stat['connects'] = $data_parts[2];
-	break;	}
-  }}
-
-return $http_main_stat;
-}
 
 function bytes_format($bytes,$mode='main') {include "config.inc.php";
 if ($mode == 'main') {	if ($bytes <  $config['mb'] ) $bytes = $bytes.' B';
@@ -856,26 +847,6 @@ $user_ip = $this->get_ip_by_name($UserName);
 return $total;
 }
 
-function report_check_big_files ($UserName,$day,$month='current') {include "config.inc.php";
-$path = $this->get_report_dir($UserName,$day,$month);
-
-$counter = 0;
-$BigFiles['0'] = 'empty';
-
-@ $file = fopen($path.'/.bigfiles',"r");
-$user_ip = $this->get_ip_by_name($UserName);
-
-  if ($file <> false) {   while ($data = fgets ($file, 1000)) {
-   $data = preg_replace("/(\s+)/", " ",$data);
-   $data_parts = explode(" ",$data);
-  	 if ($data_parts[0] == $user_ip) {  	 $bigfile['time'] = $data_parts['1'];
-  	 $bigfile['size'] = $data_parts['2'];
-  	 $bigfile['url']  = $data_parts['3'];     $BigFiles[$counter] = $bigfile;
-	 $counter++;
-	 }
-   }  }
-
-return $BigFiles;}
 
 function report_get_urls ($UserName,$day,$month='current') {include "config.inc.php";
 $path = $this->get_report_dir($UserName,$day,$month);

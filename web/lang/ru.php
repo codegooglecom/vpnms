@@ -7,6 +7,8 @@ $navbar['groups'] = "Группы";
 $navbar['admin-cp'] = "Админ-КП";
 $navbar['login'] = "Войти";
 $navbar['logout'] = "Выйти";
+$navbar['www_report'] = "Отчёт по посещению сайтов";
+$navbar['big_files'] = "Большие файлы";
 
 $l_message['title'] = "Сообщение:";
 $l_message['module_not_found'] = "Модуль не найден.";
@@ -173,4 +175,5 @@ $l_tables['loc_output'] = "Локальный исходящий";
 $l_tables['time'] = "Время";
 $l_tables['connects'] = "Соединений";
 $l_tables['bytes'] = "Байт";
+$l_tables['url'] = "Сайт";
 ?>
