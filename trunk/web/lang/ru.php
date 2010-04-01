@@ -9,6 +9,11 @@ $navbar['login'] = "Войти";
 $navbar['logout'] = "Выйти";
 $navbar['www_report'] = "Отчёт по посещению сайтов";
 $navbar['big_files'] = "Большие файлы";
+$navbar['rep_start'] = "Начало";
+$navbar['back'] = "Назад";
+$navbar['forward'] = "Вперед";
+$navbar['big_files_rep'] = 'Отчёт о больших скачаных файлах';
+
 
 $l_message['title'] = "Сообщение:";
 $l_message['module_not_found'] = "Модуль не найден.";
@@ -176,4 +181,5 @@ $l_tables['time'] = "Время";
 $l_tables['connects'] = "Соединений";
 $l_tables['bytes'] = "Байт";
 $l_tables['url'] = "Сайт";
+$l_tables['file'] = "Файл";
 ?>

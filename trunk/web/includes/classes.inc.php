@@ -391,7 +391,7 @@ function ShowHourlyStat ($UserName, $month = 'current')
 	if (empty($month) OR $month == 'current')
 	{ 
 	  	$rotation = '1';
-	  	$days = date(d);
+	  	$days = date(j);
 	  	$month = date(F);
 	  	$year = date(Y);
 	}	
@@ -422,6 +422,9 @@ function ShowHourlyStat ($UserName, $month = 'current')
        	$month=date("F",$n);
        	$year=date("Y",$n);
     }
+    
+    $script_parts = explode("/",$_SERVER['PHP_SELF']);
+    $script_name = $script_parts[sizeof($script_parts)-1];   
 
 //в цикле, входящий, исходящий, лок. вх., лок. исх.
 for ($j=1; $j <= 4; $j++)
@@ -542,7 +545,7 @@ function ShowWWWStat ($UserName, $month = 'current')
 	
 	if (empty($month) OR $month == 'current')
 	{ 
-	  	$days = date(d);
+	  	$days = date(j);
 	  	$month = date(F);
 	  	$year = date(Y);
 	}	
@@ -571,7 +574,7 @@ function ShowWWWStat ($UserName, $month = 'current')
     }
     
     $script_parts = explode("/",$_SERVER['PHP_SELF']);
-    $script_name = $script_parts[sizeof($script_parts)-1];
+    $script_name = $script_parts[sizeof($script_parts)-1];   
 
     //общая статистика по дням
     if (empty($_GET['day']))
@@ -580,10 +583,10 @@ function ShowWWWStat ($UserName, $month = 'current')
     
     for ($i=1; $i <= $days; $i++)
     {
-    	$rep_path = $config['reports_path'].date("Ymd",strtotime("$i $month $year"));
-    	$cur_date = $i." ".$month." ".$year;
     	$host_bytes = 0;
     	$host_connects = 0;
+    	$rep_path = $config['reports_path'].date("Ymd",strtotime("$i $month $year"));
+    	$cur_date = $i." ".$month." ".$year;
     	
     	@ $file = fopen($rep_path.'/.total',"r");
     	
@@ -616,20 +619,117 @@ function ShowWWWStat ($UserName, $month = 'current')
     //********************************
     else if (preg_match("/^[0-9]{1,2}$/" ,$_GET['day']))
     {
-    	if ($_GET['subaction'] == 'main')
+    	$day = $_GET['day'];
+    	$rep_path = $config['reports_path'].date("Ymd",strtotime("$day $month $year"));
+    	$cur_date = $_GET['day']." ".$month." ".$year;
+
+    	//Навигация по дням
+    	if ( ( $_GET['day'] == '1' ) AND ($_GET['day'] != $days) )
     	{
-			include ('templates/' . $config['template'] . '/sites_main_report_header.php');
-			
-			include ('templates/' . $config['template'] . '/table_footer.html');
+    		$back_day = 1;
+    		$forward_day = $_GET['day'] + 1; 
+    	}
+    	else if ( ( $_GET['day'] == '1' ) AND ($_GET['day'] == $days) )
+    	{
+    		$back_day = 1;
+    		$forward_day = 1; 
+    	}
+    	else if ( ( $_GET['day'] != '1' ) AND ($_GET['day'] == $days) )
+    	{
+    		$back_day = $_GET['day'] - 1;
+    		$forward_day = $_GET['day']; 
+    	}
+    	else
+    	{
+    		$back_day = $_GET['day'] - 1;
+    		$forward_day = $_GET['day'] + 1;    			    			
     	}
     	
+    	//Детальная статистика по сайтам
+    	if ($_GET['subaction'] == 'main')
+    	{
+    		//Составляем массив сайтов и запоминаем общий объем трафика
+    		@ $file = fopen($rep_path.'/'.$UserName,"r");
+    		if ($file <> false) 
+    		{
+    			$cnt = 0;
+    			
+    			while ($data = fgets ($file, 3000)) 
+    			{
+    				$data = preg_replace("/(\s+)/", " ",$data);
+   					$data_parts = explode(" ",$data);
+     				
+   					if ( $data_parts['0'] <> 'total:' ) 
+   					{
+     					$urls[$cnt]['url'] 	  	= $data_parts['0'];
+     					$urls[$cnt]['bytes'] 	= $this->bytes_format($data_parts['1']);
+     					$urls[$cnt]['connects'] = $data_parts['2'];
+     					$cnt++;
+   					}
+   					if ( $data_parts['0'] == 'total:' )
+   					{
+   						$total = $data_parts['1'];
+   						$total = $this->bytes_format($total);
+   					}
+    			}
+    		}
+    		
+    		include ('templates/' . $config['template'] . '/sites_report_navigation.html');
+    		include ('templates/' . $config['template'] . '/sites_main_report_header.html');
+    		$cnt = 0;
+    		
+    		while(each($urls)) 
+    		{
+    			include ('templates/' . $config['template'] . '/sites_main_report_body.html');
+    			$cnt++;
+    		}
+    		
+			include ('templates/' . $config['template'] . '/table_footer.html');
+    	}
+    	//**************************
+    	
+    	//Отчет по скачанным большим файлам
     	if ($_GET['subaction'] == 'bigfiles') 
     	{
+    		@ $file = fopen($rep_path.'/.bigfiles',"r");
     		
+    		if ($file <> false)
+    		{
+    			$cnt = 0;
+    			
+    			while ($data = fgets ($file, 3000)) 
+    			{
+    				$data = preg_replace("/(\s+)/", " ",$data);
+   					$data_parts = explode(" ",$data);
+     				
+   					if ( $data_parts['0'] == $UserName ) 
+   					{
+     					$bfiles[$cnt]['url'] 	  	= $data_parts['3'];
+     					$bfiles[$cnt]['bytes'] 	= $this->bytes_format($data_parts['2']);
+     					$bfiles[$cnt]['time'] = $data_parts['1'];
+     					$cnt++;
+   					}
+    			}
+    		}
+    		
+    		include ('templates/' . $config['template'] . '/sites_report_navigation.html');
+    		include ('templates/' . $config['template'] . '/sites_bigfiles_header.html');
+    		$cnt = 0;
+    		
+    		while(each($bfiles))
+    		{
+    			include ('templates/' . $config['template'] . '/sites_bigfiles_body.html');
+    			$cnt++; 	
+    		}
+    		
+    		include ('templates/' . $config['template'] . '/table_footer.html');
     	}
+    	//*********************************************************
     	
     	if ($_GET['subaction'] == 'time')
     	{
+    		include ('templates/' . $config['template'] . '/sites_report_navigation.html');
+    		include ('templates/' . $config['template'] . '/sites_time_header.html');
     		
     	}
     	
@@ -829,122 +929,6 @@ if ($mode == 'time') {
 
 return $bytes;
 }
-
-function report_bytes_total($UserName,$day,$month='current') {$total = 0;
-$path = $this->get_report_dir($UserName,$day,$month);
-$user_ip = $this->get_ip_by_name($UserName);
-
-@ $file = fopen($path.'/'.$user_ip,"r");
-
-  if ($file <> false) {
-  $data = fgets ($file, 1000);
-  $data = preg_replace("/(\s+)/", " ",$data);
-  $data_parts = explode(" ",$data);
-  $total = $data_parts[1];
-  }
-
-
-return $total;
-}
-
-
-function report_get_urls ($UserName,$day,$month='current') {include "config.inc.php";
-$path = $this->get_report_dir($UserName,$day,$month);
-
-$urls['0'] = 'empty';
-$counter = 0;
-$user_ip = $this->get_ip_by_name($UserName);
-@ $file = fopen($path.'/'.$user_ip,"r");
-
-  if ($file <> false) {   while ($data = fgets ($file, 3000)) {   $data = preg_replace("/(\s+)/", " ",$data);
-   $data_parts = explode(" ",$data);
-     if ( $data_parts['0'] <> 'total:' ) {     $url['url'] 	  = $data_parts['0'];
-     $url['bytes'] 	  = $data_parts['1'];
-     $url['connects'] = $data_parts['2'];
-     $urls[$counter]  = $url;
-     $counter++;
-   	 }   }
-  }
-
-return $urls;
-}
-
-function report_get_urls_time ($UserName,$day,$month='current') {include "config.inc.php";
-$path = $this->get_report_dir($UserName,$day,$month);
-
-$urls['0'] = 'empty';
-$counter = 0;
-
-$user_ip = $this->get_ip_by_name($UserName);
-@ $file = fopen($path.'/'.$user_ip,"r");
-
-  if ($file <> false) {
-   while ($data = fgets ($file, 3000)) {
-   $data = preg_replace("/(\s+)/", " ",$data);
-   $data_parts = explode(" ",$data);
-     if ( $data_parts['0'] <> 'total:' ) {     $t00 = $data_parts['3'];  $t00 = explode("-",$t00); $t00 = $t00['1'];
-     $t01 = $data_parts['4'];  $t01 = explode("-",$t01); $t01 = $t01['1'];
-     $t02 = $data_parts['5'];  $t02 = explode("-",$t02); $t02 = $t02['1'];
-     $t03 = $data_parts['6'];  $t03 = explode("-",$t03); $t03 = $t03['1'];
-     $t04 = $data_parts['7'];  $t04 = explode("-",$t04); $t04 = $t04['1'];
-     $t05 = $data_parts['8'];  $t05 = explode("-",$t05); $t05 = $t05['1'];
-     $t06 = $data_parts['9'];  $t06 = explode("-",$t06); $t06 = $t06['1'];
-     $t07 = $data_parts['10']; $t07 = explode("-",$t07); $t07 = $t07['1'];
-     $t08 = $data_parts['11']; $t08 = explode("-",$t08); $t08 = $t08['1'];
-     $t09 = $data_parts['12']; $t09 = explode("-",$t09); $t09 = $t09['1'];
-     $t10 = $data_parts['13']; $t10 = explode("-",$t10); $t10 = $t10['1'];
-     $t11 = $data_parts['14']; $t11 = explode("-",$t11); $t11 = $t11['1'];
-     $t12 = $data_parts['15']; $t12 = explode("-",$t12); $t12 = $t12['1'];
-     $t13 = $data_parts['16']; $t13 = explode("-",$t13); $t13 = $t13['1'];
-     $t14 = $data_parts['17']; $t14 = explode("-",$t14); $t14 = $t14['1'];
-     $t15 = $data_parts['18']; $t15 = explode("-",$t15); $t15 = $t15['1'];
-     $t16 = $data_parts['19']; $t16 = explode("-",$t16); $t16 = $t16['1'];
-     $t17 = $data_parts['20']; $t17 = explode("-",$t17); $t17 = $t17['1'];
-     $t18 = $data_parts['21']; $t18 = explode("-",$t18); $t18 = $t18['1'];
-     $t19 = $data_parts['22']; $t19 = explode("-",$t19); $t19 = $t19['1'];
-     $t20 = $data_parts['23']; $t20 = explode("-",$t20); $t20 = $t20['1'];
-     $t21 = $data_parts['24']; $t21 = explode("-",$t21); $t21 = $t21['1'];
-     $t22 = $data_parts['25']; $t22 = explode("-",$t22); $t22 = $t22['1'];
-     $t23 = $data_parts['25']; $t23 = explode("-",$t23); $t23 = $t23['1'];
-
-     $url['url'] 	  = $data_parts['0'];
-     $url['total'] 	  = $data_parts['1'];
-     $url['00'] 	  = $t00;
-     $url['01'] 	  = $t01;
-     $url['02'] 	  = $t02;
-     $url['03'] 	  = $t03;
-     $url['04'] 	  = $t04;
-     $url['05'] 	  = $t05;
-     $url['06'] 	  = $t06;
-     $url['07'] 	  = $t07;
-     $url['08'] 	  = $t08;
-     $url['09'] 	  = $t09;
-     $url['10'] 	  = $t10;
-     $url['11'] 	  = $t11;
-     $url['12'] 	  = $t12;
-     $url['13'] 	  = $t13;
-     $url['14'] 	  = $t14;
-     $url['15'] 	  = $t15;
-     $url['16'] 	  = $t16;
-     $url['17'] 	  = $t17;
-     $url['18'] 	  = $t18;
-     $url['19'] 	  = $t19;
-     $url['20'] 	  = $t20;
-     $url['21'] 	  = $t21;
-     $url['22'] 	  = $t22;
-     $url['23'] 	  = $t23;
-
-     $urls[$counter]  = $url;
-     $counter++;
-   	 }
-   }
-  }
-
-
-return $urls;
-}
-
-function test1 ($a) {return 0;}
 
 }
 ?>
