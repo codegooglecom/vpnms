@@ -13,7 +13,7 @@ $navbar['rep_start'] = "Начало";
 $navbar['back'] = "Назад";
 $navbar['forward'] = "Вперед";
 $navbar['big_files_rep'] = 'Отчёт о больших скачаных файлах';
-
+$navbar['sites_time_rep'] = 'Отчёт посещения сайтов по времени';
 
 $l_message['title'] = "Сообщение:";
 $l_message['module_not_found'] = "Модуль не найден.";

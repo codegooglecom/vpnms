@@ -728,8 +728,94 @@ function ShowWWWStat ($UserName, $month = 'current')
     	
     	if ($_GET['subaction'] == 'time')
     	{
+    		//Составляем массив сайтов и запоминаем общий объем трафика
+    		@ $file = fopen($rep_path.'/'.$UserName,"r");
+    		if ($file <> false) 
+    		{
+    			$cnt = 0;
+    			
+    			while ($data = fgets ($file, 3000)) 
+    			{
+    				$data = preg_replace("/(\s+)/", " ",$data);
+   					$data_parts = explode(" ",$data);
+     				
+   					if ( $data_parts['0'] <> 'total:' ) 
+   					{
+     					$t00 = $data_parts['3'];  $t00 = explode("-",$t00); $urls[$cnt]['00'] = $this->bytes_format($t00['1'],'time'); $total00 = $total00 + $t00['1']; 
+     					$t01 = $data_parts['4'];  $t01 = explode("-",$t01); $urls[$cnt]['01'] = $this->bytes_format($t01['1'],'time'); $total01 = $total01 + $t01['1'];
+     					$t02 = $data_parts['5'];  $t02 = explode("-",$t02); $urls[$cnt]['02'] = $this->bytes_format($t02['1'],'time'); $total02 = $total02 + $t02['1'];
+     					$t03 = $data_parts['6'];  $t03 = explode("-",$t03); $urls[$cnt]['03'] = $this->bytes_format($t03['1'],'time'); $total03 = $total03 + $t03['1'];
+     					$t04 = $data_parts['7'];  $t04 = explode("-",$t04); $urls[$cnt]['04'] = $this->bytes_format($t04['1'],'time'); $total04 = $total04 + $t04['1'];
+     					$t05 = $data_parts['8'];  $t05 = explode("-",$t05); $urls[$cnt]['05'] = $this->bytes_format($t05['1'],'time'); $total05 = $total05 + $t05['1'];
+     					$t06 = $data_parts['9'];  $t06 = explode("-",$t06); $urls[$cnt]['06'] = $this->bytes_format($t06['1'],'time'); $total06 = $total06 + $t06['1'];
+     					$t07 = $data_parts['10'];  $t07 = explode("-",$t07); $urls[$cnt]['07'] = $this->bytes_format($t07['1'],'time'); $total07 = $total07 + $t07['1'];
+     					$t08 = $data_parts['11'];  $t08 = explode("-",$t08); $urls[$cnt]['08'] = $this->bytes_format($t08['1'],'time'); $total08 = $total08 + $t08['1'];
+     					$t09 = $data_parts['12'];  $t09 = explode("-",$t09); $urls[$cnt]['09'] = $this->bytes_format($t09['1'],'time'); $total09 = $total09 + $t09['1'];
+     					$t10 = $data_parts['13'];  $t10 = explode("-",$t10); $urls[$cnt]['10'] = $this->bytes_format($t10['1'],'time'); $total10 = $total10 + $t10['1'];
+     					$t11 = $data_parts['14'];  $t11 = explode("-",$t11); $urls[$cnt]['11'] = $this->bytes_format($t11['1'],'time'); $total11 = $total11 + $t11['1'];
+     					$t12 = $data_parts['15'];  $t12 = explode("-",$t12); $urls[$cnt]['12'] = $this->bytes_format($t12['1'],'time'); $total12 = $total12 + $t12['1'];
+     					$t13 = $data_parts['16'];  $t13 = explode("-",$t13); $urls[$cnt]['13'] = $this->bytes_format($t13['1'],'time'); $total13 = $total13 + $t13['1'];
+     					$t14 = $data_parts['17'];  $t14 = explode("-",$t14); $urls[$cnt]['14'] = $this->bytes_format($t14['1'],'time'); $total14 = $total14 + $t14['1'];
+     					$t15 = $data_parts['18'];  $t15 = explode("-",$t15); $urls[$cnt]['15'] = $this->bytes_format($t15['1'],'time'); $total15 = $total15 + $t15['1'];
+     					$t16 = $data_parts['19'];  $t16 = explode("-",$t16); $urls[$cnt]['16'] = $this->bytes_format($t16['1'],'time'); $total16 = $total16 + $t16['1'];
+     					$t17 = $data_parts['20'];  $t17 = explode("-",$t17); $urls[$cnt]['17'] = $this->bytes_format($t17['1'],'time'); $total17 = $total17 + $t17['1'];
+     					$t18 = $data_parts['21'];  $t18 = explode("-",$t18); $urls[$cnt]['18'] = $this->bytes_format($t18['1'],'time'); $total18 = $total18 + $t18['1'];
+     					$t19 = $data_parts['22'];  $t19 = explode("-",$t19); $urls[$cnt]['19'] = $this->bytes_format($t19['1'],'time'); $total19 = $total19 + $t19['1'];
+     					$t20 = $data_parts['23'];  $t20 = explode("-",$t20); $urls[$cnt]['20'] = $this->bytes_format($t20['1'],'time'); $total20 = $total20 + $t20['1'];
+     					$t21 = $data_parts['24'];  $t21 = explode("-",$t21); $urls[$cnt]['21'] = $this->bytes_format($t21['1'],'time'); $total21 = $total21 + $t21['1'];
+     					$t22 = $data_parts['25'];  $t22 = explode("-",$t22); $urls[$cnt]['22'] = $this->bytes_format($t22['1'],'time'); $total22 = $total22 + $t22['1'];
+     					$t23 = $data_parts['26'];  $t23 = explode("-",$t23); $urls[$cnt]['23'] = $this->bytes_format($t23['1'],'time'); $total23 = $total23 + $t23['1'];
+     					
+     					$urls[$cnt]['total'] 	= $this->bytes_format($data_parts['1']);
+     					$urls[$cnt]['url'] 	  	= $data_parts['0'];
+   						
+   						$cnt++;
+   					}
+   					if ( $data_parts['0'] == 'total:' )
+   					{
+   						$total = $data_parts['1'];
+   						$total = $this->bytes_format($total);
+   					}
+    			}
+    		}
+
+    		$total00 = $this->bytes_format($total00,'time');
+    		$total01 = $this->bytes_format($total01,'time');
+    		$total02 = $this->bytes_format($total02,'time');
+    		$total03 = $this->bytes_format($total03,'time');
+    		$total04 = $this->bytes_format($total04,'time');
+    		$total05 = $this->bytes_format($total05,'time');
+    		$total06 = $this->bytes_format($total06,'time');
+    		$total07 = $this->bytes_format($total07,'time');
+    		$total08 = $this->bytes_format($total08,'time');
+    		$total09 = $this->bytes_format($total09,'time');
+    		$total10 = $this->bytes_format($total10,'time');
+    		$total11 = $this->bytes_format($total11,'time');
+    		$total12 = $this->bytes_format($total12,'time');
+    		$total13 = $this->bytes_format($total13,'time');
+    		$total14 = $this->bytes_format($total14,'time');
+    		$total15 = $this->bytes_format($total15,'time');
+    		$total16 = $this->bytes_format($total16,'time');
+    		$total17 = $this->bytes_format($total17,'time');
+    		$total18 = $this->bytes_format($total18,'time');
+    		$total19 = $this->bytes_format($total19,'time');
+    		$total20 = $this->bytes_format($total20,'time');
+    		$total21 = $this->bytes_format($total21,'time');
+    		$total22 = $this->bytes_format($total22,'time');
+    		$total23 = $this->bytes_format($total23,'time');
+    		
     		include ('templates/' . $config['template'] . '/sites_report_navigation.html');
     		include ('templates/' . $config['template'] . '/sites_time_header.html');
+    		$cnt = 0;
+    		
+    		while(each($urls))
+    		{
+    			include ('templates/' . $config['template'] . '/sites_time_body.html');   			
+    			$cnt++;    			
+    		}
+    			
+    		include ('templates/' . $config['template'] . '/sites_time_total.html');
+    		include ('templates/' . $config['template'] . '/table_footer.html');
     		
     	}
     	
@@ -922,8 +1008,8 @@ function bytes_format($bytes,$mode='main') {include "config.inc.php";
 }
 
 if ($mode == 'time') {
-	if ($bytes < 100*$config['mb']*$config['mb']) 	   	   $bytes = number_format($bytes/($config['mb']*$config['mb']), 1, '.', ' ').'M';
-	if ($bytes >= 100*$config['mb']*$config['mb'] ) 	   $bytes = number_format($bytes/($config['mb']*$config['mb']*$config['mb']), 1, '.', ' ').'G';
+	if ($bytes < 100*$config['mb']*$config['mb']) 	   	   $bytes = number_format($bytes/($config['mb']*$config['mb']), 2, '.', ' ').'M';
+	if ($bytes >= 100*$config['mb']*$config['mb'] ) 	   $bytes = number_format($bytes/($config['mb']*$config['mb']*$config['mb']), 2, '.', ' ').'G';
 }
 
 
