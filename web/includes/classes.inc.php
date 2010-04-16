@@ -249,12 +249,20 @@ function mask_2_cidr($mask)
 }
 
 
-function ShowUsers($orderby, $month)
+function ShowUsers($orderby, $month, $group = '')
 {
 		Global $db, $config, $l_tables, $sum_input, $sum_output, $sum_local_input, $sum_local_output,
-		$working_accounts, $blocked_accounts, $expire_accounts, $localonly_accounts, $account_summ;
+		$working_accounts, $blocked_accounts, $expire_accounts, $localonly_accounts, $account_summ, $l_forms;
 	
-		$result  = $db->query("SELECT * FROM `radcheck` ORDER BY `".$orderby."`");
+		if (empty($group))
+			$sql = "SELECT * FROM `radcheck` ORDER BY `".$orderby."`";
+		else
+			$sql = "SELECT *
+					FROM radcheck, radusergroup
+					WHERE radcheck.username = radusergroup.username
+					AND radusergroup.groupname = '".$group."' ORDER BY `".$orderby."`";
+		
+		$result  = $db->query($sql);
 		$num_results = $db->Num_rows($result);
 		
 		include ('templates/' . $config['template'] . '/users_table_header.html');
@@ -496,7 +504,16 @@ for ($j=1; $j <= 4; $j++)
 			$cur_date = $start_hour."-".++$start_hour;
 			
 			$day = $_GET['day'];
-			$period = strtotime("$i:00 $day $month $year");
+			
+			/*
+			 * На некоторых версиях пхп подобные записи strtotime("24:00 7 april 2010")
+			 * почему-то не срабатывают, возвращается пустой результат. Т.е. когда цикл доходит до 24 часа
+			 */
+			if ($i < 24)
+				$period = strtotime("$i:00 $day $month $year");
+			else
+				$period = strtotime("23:59 $day $month $year") + 60;
+			
 			$sql_add = "AND `timestamp` = ".$period;
 		}
 		
@@ -520,7 +537,6 @@ for ($j=1; $j <= 4; $j++)
 				WHERE `owner` = '".$UserName."' 
 				AND `direction` = '".$direction."'
 				AND `local` = '".$local."' ".$sql_add;
-		
 		$result  = $db->query($sql);
 		$bytes = $db->Fetch_array($result);
 		

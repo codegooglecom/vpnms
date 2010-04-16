@@ -55,8 +55,8 @@ window.open(theURL, '', 'width=1024, height=600, scrollbars=yes, resizable=yes')
       <a href="javascript:void(0);" onClick="fullScreen('showinfo.php?UserName=<?=$row['username'];?>&month=<?=$month;?>')"><img src=templates/<?=$config['template'];?>/images/info.gif ></a>
       
       <? if (($_GET['month'] =='current') OR (empty($_GET['month'])) ): ?>
-	  <a href=index.php?module=Users&action=edit&UserName=<?=$row['username'];?>#bottom_label><img src="templates/<?=$config['template'];?>/images/edit.gif"></a>
-	  <a href=index.php?module=Users&action=delete&UserName=<?=$row['username'];?> onClick="return window.confirm('<?=$l_tables['user_del'];?>')"><img src="templates/<?=$config['template'];?>/images/delete.gif"></a>      
+	  <a href=index.php?module=Users&action=edit&UserName=<?=$row['username'];?>&group=<?=$_GET['group'];?>#bottom_label><img src="templates/<?=$config['template'];?>/images/edit.gif"></a>
+	  <a href="index.php?module=Users&action=delete&UserName=<?=$row['username'];?>&group=<?=$_GET['group'];?>" onClick="return window.confirm('<?=$l_tables['user_del'];?>')"><img src="templates/<?=$config['template'];?>/images/delete.gif"></a>      
 	  <? endif; ?>
       </td>
     </tr>
