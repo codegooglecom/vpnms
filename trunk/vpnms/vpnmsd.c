@@ -324,12 +324,20 @@ int main(int argc, char **argv)
           	        //вычисляем время сессии
           			query = malloc(256);
           	        sprintf(query, "SELECT sessions.StartTime, sessions.SessionTime FROM `sessions` WHERE `SessId` = %llu LIMIT 1", SessId);
+
+          	        //strlen( query ) >= 256
+
           	        res = exec_query(query);
           	        row = mysql_fetch_row(res);
           	        SessionTime = (unsigned long)time(NULL) - atoll(row[0]);
           	        //время, прошедшее с последнего обновления сессии
           	        TimePassed = (unsigned long)time(NULL) - atoll(row[0]) - atoll(row[1]);
           	        mysql_free_result(res);
+
+          	        //<tmp>
+          	        if (TimePassed < 0)
+          	        	syslog (LOG_NOTICE, " TimePassed < 0, ahtung! %s %s",__FILE__,__LINE__);
+          	        //</tmp>
 
           	        // Высчитываем среднюю входящуюю и исходящую скорость
           	        SpeedIn = (cur_copy->input + cur_copy->local_input)/TimePassed;

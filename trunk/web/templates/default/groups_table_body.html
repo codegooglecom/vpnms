@@ -6,7 +6,7 @@ window.open(theURL, '', 'width=1024, height=600, scrollbars=yes, resizable=yes')
 
     <tr bgColor=ffffe1 align = center id="row" onmouseover="this.style.background='#c0c0c0';" onmouseout="this.style.background='#ffffe1';">
       <td><?=$group_number;?></td>
-      <td><?=$row['groupname'];?></td>
+      <td><a href="index.php?module=Users&group=<?=$row['groupname'];?>"><?=$row['groupname'];?></a></td>
 
       <td>    
 	  <? if ( $row['limit_type'] =='unlimited' ): ?> 

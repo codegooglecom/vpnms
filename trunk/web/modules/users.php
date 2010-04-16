@@ -38,7 +38,7 @@ else
 		if (!$_GET['orderby']) 
 			$_GET['orderby']='id';
 		
-		$billing->ShowUsers($_GET['orderby'], $_GET['month']);
+		$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group']);
 		
 		//Составляем массив логинов и апишников
 		$logins_res  = $db->query("SELECT radcheck.UserName FROM `radcheck`");
@@ -69,7 +69,6 @@ else
 		}	
 		
 		include ('templates/' . $config['template'] . '/new_user_table.html');
-		
 	}
 	else
 	{
@@ -136,7 +135,7 @@ else
 			if (!$_GET['orderby']) 
 			$_GET['orderby']='id';
 		
-			$billing->ShowUsers($_GET['orderby'], $_GET['month']);
+			$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group']);
 			
 			$personal_opts = $billing->PersonalOpts($_GET['UserName']);
 			
@@ -264,9 +263,9 @@ else
             //если надо - отключаем пользователя
             if ($_POST['accountedit_disconnect'] == 'on') 
             	$billing->disconnect_user($_POST['accountedit_login']);
-            
+                      	
             $page->message($l_message['user_edit']);
-            $page->redirect("index.php?module=Users",$config['redirection_time']);
+            $page->redirect("index.php?module=Users&group=".$_GET['group'],$config['redirection_time']);
 		}
 		else if ($_GET['action'] == "delete")
 		{
@@ -279,7 +278,7 @@ else
             if (($cur_user_power['admin'] == '1') AND ($admins_count == 1)) 
             {
             	$page->message($l_message['last_admin']);
-				$page->redirect("index.php?module=Users",$config['redirection_time']);
+				$page->redirect("index.php?module=Users&group=".$_GET['group'],$config['redirection_time']);
             }
             else 
             {
@@ -287,29 +286,26 @@ else
             	$billing->disconnect_user($row['UserName']);
 				              
             	//узнаем баланс за все месяцы
-              	$balance   = $billing->Balance($row['UserName'],'current');
-              	$balance_1 = $billing->Balance($row['UserName'],'last');
-              	$balance_2 = $billing->Balance($row['UserName'],'before_last');             	
+              	$balance   = $billing->Balance($_GET['UserName'],'current');
+              	$balance_1 = $billing->Balance($_GET['UserName'],'last');
+              	$balance_2 = $billing->Balance($_GET['UserName'],'before_last');      	
 				
 	  		  	//записываем суммарный трафик в одну сессию за каждый месяц
-              	$db->query("INSERT INTO sessions   (`UserName`,`InternetIn`,`InternetOut`,`LocalIn`,`LocalOut`) VALUES ('@DELETED@','".$balance['input']."','".$balance['output']."','".$balance['local_input']."','".$balance['local_output']."')");
-			  	$db->query("INSERT INTO sessions_1 (`UserName`,`InternetIn`,`InternetOut`,`LocalIn`,`LocalOut`) VALUES ('@DELETED@','".$balance_1['input']."','".$balance_1['output']."','".$balance_1['local_input']."','".$balance_1['local_output']."')");
-			  	$db->query("INSERT INTO sessions_2 (`UserName`,`InternetIn`,`InternetOut`,`LocalIn`,`LocalOut`) VALUES ('@DELETED@','".$balance_2['input']."','".$balance_2['output']."','".$balance_2['local_input']."','".$balance_2['local_output']."')");
+              	$db->query("INSERT INTO sessions   (`UserName`,`InternetIn`,`InternetOut`,`LocalIn`,`LocalOut`, `Rotation`) VALUES
+                ('@DELETED@','".$balance['input']."','".$balance['output']."','".$balance['local_input']."','".$balance['local_output']."', 1),
+                ('@DELETED@','".$balance_1['input']."','".$balance_1['output']."','".$balance_1['local_input']."','".$balance_1['local_output']."', 2),
+                ('@DELETED@','".$balance_2['input']."','".$balance_2['output']."','".$balance_2['local_input']."','".$balance_2['local_output']."', 3)
+                ");
 				
               	//удаляем данные о пользователе
               	$db->query("DELETE FROM `radcheck` WHERE `username` = '".$_GET['UserName']."'");
               	$db->query("DELETE FROM `radusergroup` WHERE `username` = '".$_GET['UserName']."'");
               	$db->query("DELETE FROM `radreply` WHERE `username` = '".$_GET['UserName']."'");
               	$db->query("DELETE FROM `sessions` WHERE `UserName` = '".$_GET['UserName']."'");
-              	$db->query("DELETE FROM `sessions_1` WHERE `UserName` = '".$_GET['UserName']."'");
-              	$db->query("DELETE FROM `sessions_2` WHERE `UserName` = '".$_GET['UserName']."'");
-				
-				/*
-				 * добавить удаление из таблиц статистики по портам  
-				 */
+              	$db->query("DELETE FROM `hourlystat` WHERE `owner` = '".$_GET['UserName']."'");
 				
               	$page->message($l_message['user_del']);
-              	$page->redirect("index.php?module=Users",$config['redirection_time']);
+              	$page->redirect("index.php?module=Users&group=".$_GET['group'],$config['redirection_time']);
             }
 		}
 		else
