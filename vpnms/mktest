@@ -1,0 +1,2 @@
+
+gcc -lmysqlclient -lz -o mysql_test mysql_test.c

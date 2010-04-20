@@ -39,7 +39,6 @@
 #include "/usr/local/include/mysql/mysql.h"
 #include "config.h"
 #include "vpnms_functions.h"
-#include <assert.h>
 
 #define VERSION "1.0.0 "
 #define REVISION "41"

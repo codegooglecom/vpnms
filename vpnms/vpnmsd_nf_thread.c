@@ -48,6 +48,7 @@ void * vpnmsd_nf_thread(void * arg)
     char src_ip[17], dst_ip[17];
     char *query;
     int local_flow;
+    char *pUsername;
 
     if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
     {
@@ -107,6 +108,7 @@ void * vpnmsd_nf_thread(void * arg)
                     	if(is_it_local(dst_ip)) local_flow = 1;
 
                         query = malloc(512);
+                        pUsername = username_by_ip(src_ip);
 
                         sprintf(query,
               	        		"INSERT INTO `flows` ("
@@ -122,9 +124,11 @@ void * vpnmsd_nf_thread(void * arg)
               	        		"VALUES ("
               	        		" %lu, '%s', '%s', %u, '%s', %u, %u, %u"
               	        		")",
-              	        		(unsigned long)time(NULL), username_by_ip(src_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		(unsigned long)time(NULL), pUsername, src_ip, ntohs (pData->r[i].s_port), dst_ip,
               	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
               	        exec_query(query);
+
+              	        free(pUsername);
                     }
           	        //----
 
@@ -159,6 +163,8 @@ void * vpnmsd_nf_thread(void * arg)
                     	if(is_it_local(src_ip)) local_flow = 1;
 
                     	query = malloc(512);
+                    	pUsername = username_by_ip(src_ip);
+
               	        sprintf(query,
               	        		"INSERT INTO `flows` ("
               	        		"`TimeStamp` ,"
@@ -173,9 +179,11 @@ void * vpnmsd_nf_thread(void * arg)
               	        		"VALUES ("
               	        		" %lu, '%s', '%s', %u, '%s', %u, %u, %u"
               	        		")",
-              	        		(unsigned long)time(NULL), username_by_ip(dst_ip), src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		(unsigned long)time(NULL), pUsername, src_ip, ntohs (pData->r[i].s_port), dst_ip,
               	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
               	        exec_query(query);
+
+              	        free(pUsername);
                     }
           	        //----
 
