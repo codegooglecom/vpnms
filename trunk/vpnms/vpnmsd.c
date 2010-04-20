@@ -125,8 +125,9 @@ int main(int argc, char **argv)
     	unsigned long int		SpeedIn;
     	unsigned long int		SpeedOut;
     	unsigned long int		TimePassed;
-    	char					*username;
     	char					*cmd;
+    	char					*pUsername;
+    	char					*pStatus;
 
         char help_str[] =
         		"Usage: vpnmsd [OPTION]\n"
@@ -318,7 +319,10 @@ int main(int argc, char **argv)
 
           		// Смотрим последнюю сессию, если ее еще нет - значит еще не успел создасться. Тогда пропускаем этого пользователя
                 // т.к. без добавления правил в цепочку VPNMS все равно трафик не пойдет.
-          		SessId = get_sess_id(username_by_ip(cur_copy->ip));
+          		pUsername = username_by_ip(cur_copy->ip);
+      	        SessId = get_sess_id(pUsername);
+      	        free(pUsername);
+
           		if (SessId != -1)
           		{
           	        //вычисляем время сессии
@@ -361,17 +365,22 @@ int main(int argc, char **argv)
           	        exec_query(query);
 
           	        // Проверяем баланс пользователя, если все прокачал - отключаем
-          	        username = username_by_ip(cur_copy->ip);
-          	        balance = check_balance(username);
-          	        if ( strcasecmp(check_status(username), STATUS_WORKING) == 0)
+          	        pUsername = username_by_ip(cur_copy->ip);
+          	        pStatus = check_status(pUsername);
+          	        balance = check_balance(pUsername);
+
+          	        if ( strcasecmp(pStatus, STATUS_WORKING) == 0)
           	        	if (strcasecmp(balance.limit_type, LIMIT_TYPE_LIMITED) == 0 )
           	        		if ( (balance.input >= balance.limit) || (balance.output >= balance.out_limit) )
           	        		{
           	        			cmd = malloc(256);
-          	        			sprintf(cmd, "%s %s", vpnms_config.vars_ond, username);
+          	        			sprintf(cmd, "%s %s", vpnms_config.vars_ond, pUsername);
           	        			exec_cmd(cmd);
           	        		}
+
 					free(balance.limit_type);
+					free(pUsername);
+					free(pStatus);
           		}
           		cur_copy = cur_copy->next;
            	}
