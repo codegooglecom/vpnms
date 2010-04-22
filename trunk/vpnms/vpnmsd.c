@@ -103,6 +103,7 @@ size_t					num_subnets = 0;
 pthread_mutex_t			mutex = PTHREAD_MUTEX_INITIALIZER;
 int						nf_thread_initialized = 0;
 int						waiting_mutex = 0;
+MYSQL 					mysql;
 
 int main(int argc, char **argv)
 {
@@ -315,7 +316,7 @@ int main(int argc, char **argv)
                 //обнуляем скорость
       			query = malloc(256);
       	        sprintf(query, "UPDATE `sessions` SET `Speed_in` = 0, `Speed_out` = 0 WHERE `Connected` = 1");
-      	        exec_query(query);
+      	        exec_query_write(query);
 
           		// Смотрим последнюю сессию, если ее еще нет - значит еще не успел создасться. Тогда пропускаем этого пользователя
                 // т.к. без добавления правил в цепочку VPNMS все равно трафик не пойдет.
@@ -362,7 +363,7 @@ int main(int argc, char **argv)
           	        		"WHERE `SessId` = %llu LIMIT 1",
           	        		cur_copy->input, cur_copy->output, cur_copy->local_input, cur_copy->local_output,
           	        		(unsigned long)time(NULL), SessionTime, SpeedIn, SpeedOut, SessId);
-          	        exec_query(query);
+          	        exec_query_write(query);
 
           	        // Проверяем баланс пользователя, если все прокачал - отключаем
           	        pUsername = username_by_ip(cur_copy->ip);

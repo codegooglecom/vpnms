@@ -126,7 +126,7 @@ void * vpnmsd_nf_thread(void * arg)
               	        		")",
               	        		(unsigned long)time(NULL), pUsername, src_ip, ntohs (pData->r[i].s_port), dst_ip,
               	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
-              	        exec_query(query);
+              	        exec_query_write(query);
 
               	        free(pUsername);
                     }
@@ -163,7 +163,7 @@ void * vpnmsd_nf_thread(void * arg)
                     	if(is_it_local(src_ip)) local_flow = 1;
 
                     	query = malloc(512);
-                    	pUsername = username_by_ip(src_ip);
+                    	pUsername = username_by_ip(dst_ip);
 
               	        sprintf(query,
               	        		"INSERT INTO `flows` ("
@@ -181,7 +181,7 @@ void * vpnmsd_nf_thread(void * arg)
               	        		")",
               	        		(unsigned long)time(NULL), pUsername, src_ip, ntohs (pData->r[i].s_port), dst_ip,
               	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
-              	        exec_query(query);
+              	        exec_query_write(query);
 
               	        free(pUsername);
                     }
