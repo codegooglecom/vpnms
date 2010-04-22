@@ -185,6 +185,32 @@ MYSQL_RES *exec_query(char *query)
     return res;
 }
 
+void exec_query_write(char *query)
+{
+	MYSQL 		mysql;
+
+	if ( 0 == strcasecmp (vpnms_config.vpnms_sql_debug, "yes") )
+		syslog (LOG_DEBUG, "SQL: %s", query);
+
+	mysql_init(&mysql);
+	if (!mysql_real_connect(&mysql, vpnms_config.mysql_host, vpnms_config.mysql_username, vpnms_config.mysql_password,
+			vpnms_config.mysql_database, vpnms_config.mysql_port, NULL, 0))
+	{
+		syslog (LOG_ERR, "Failed to connect to database: Error: %s\n", mysql_error(&mysql));
+		exit(EXIT_FAILURE);
+	}
+
+    if ( mysql_real_query(&mysql, query, strlen(query)) )
+    {
+		syslog (LOG_ERR, "Query failed: Error: %s\n", mysql_error(&mysql));
+		exit(EXIT_FAILURE);
+	}
+    free(query);
+
+    mysql_close(&mysql);
+}
+
+
 int exec_cmd(char *cmd)
 {
 	if ( 0 == strcasecmp (vpnms_config.vpnms_cmd_debug, "yes") )
@@ -209,7 +235,11 @@ char *username_by_ip(char *ip)
     res = exec_query(query);
 
     if(mysql_num_rows(res) < 1)
+    {
+    	syslog (LOG_ERR, " Critical error: user with ip %s not found\n", ip);
+    	mysql_free_result(res);
     	return NULL;
+    }
 
     row = mysql_fetch_row(res);
     username = strdup(row[0]);
