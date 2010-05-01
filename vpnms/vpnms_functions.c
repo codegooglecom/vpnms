@@ -24,7 +24,6 @@ short received_kill_sig = 0;
 void StopDaemon()
 {
 	char				*query;
-	char				*cmd;
 	MYSQL_RES			*res;
 	MYSQL_ROW			row;
 
@@ -168,12 +167,14 @@ MYSQL_RES *exec_query(char *query)
 			vpnms_config.mysql_database, vpnms_config.mysql_port, NULL, 0))
 	{
 		syslog (LOG_ERR, "Failed to connect to database: Error: %s\n", mysql_error(&mysql));
+		StopDaemon();
 		exit(EXIT_FAILURE);
 	}
 
     if ( mysql_real_query(&mysql, query, strlen(query)) )
     {
 		syslog (LOG_ERR, "Query failed: Error: %s\n", mysql_error(&mysql));
+		StopDaemon();
 		exit(EXIT_FAILURE);
 	}
     free(query);
@@ -197,12 +198,14 @@ void exec_query_write(char *query)
 			vpnms_config.mysql_database, vpnms_config.mysql_port, NULL, 0))
 	{
 		syslog (LOG_ERR, "Failed to connect to database: Error: %s\n", mysql_error(&mysql));
+		StopDaemon();
 		exit(EXIT_FAILURE);
 	}
 
     if ( mysql_real_query(&mysql, query, strlen(query)) )
     {
 		syslog (LOG_ERR, "Query failed: Error: %s\n", mysql_error(&mysql));
+		StopDaemon();
 		exit(EXIT_FAILURE);
 	}
     free(query);
@@ -329,6 +332,7 @@ struct s_balance check_balance(char *username)
 	if (mysql_num_rows(res) != 1)
 	{
 		syslog (LOG_ERR, "Error: in function check_balance(), check the database for logical errors.\n");
+		StopDaemon();
 		exit(EXIT_FAILURE);
 	}
 	row = mysql_fetch_row(res);
@@ -445,6 +449,7 @@ int add_rules(char *username, char *if_name)
     if (mysql_num_rows(res) < 1)
     {
     	syslog (LOG_ERR, " in function add_rules(): can't read allowed ports, user %s not found", username);
+    	StopDaemon();
     	exit(EXIT_FAILURE);
     }
 	row = mysql_fetch_row(res);
@@ -461,6 +466,7 @@ int add_rules(char *username, char *if_name)
 	    if (mysql_num_rows(res) < 1)
 	    {
 	    	syslog (LOG_ERR, " in function add_rules(): can't read bandwidth id, user %s not found", username);
+	    	StopDaemon();
 	    	exit(EXIT_FAILURE);
 	    }
 		row = mysql_fetch_row(res);
@@ -473,6 +479,7 @@ int add_rules(char *username, char *if_name)
 	    if (mysql_num_rows(res) < 1)
 	    {
 	    	syslog (LOG_ERR, " in function add_rules(): can't read bandwidth name, bandwidth id %s not found", bandwidth_id);
+	    	StopDaemon();
 	    	exit(EXIT_FAILURE);
 	    }
 
@@ -496,6 +503,7 @@ int add_rules(char *username, char *if_name)
     if (pf_fd == -1)
     {
     	syslog (LOG_ERR, " error in create %s", pf_file);
+    	StopDaemon();
     	exit(EXIT_FAILURE);
     }
     ftruncate(pf_fd, 0);

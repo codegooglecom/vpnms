@@ -74,7 +74,7 @@ else
             
             $grlimit = $_POST['groupadd_limit']*$config['mb']*$config['mb'];
             
-            $query1 = "INSERT INTO `radius`.`vpnmsgroupreply` (
+            $query1 = "INSERT INTO `vpnmsgroupreply` (
 						`id` ,
 						`groupname` ,
 						`allow_tcp_port` ,

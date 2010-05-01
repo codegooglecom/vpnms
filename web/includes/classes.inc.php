@@ -295,7 +295,7 @@ function ShowUsers($orderby, $month, $group = '')
           	$account_number++;
         }
 		
-		include ('templates/' . $config['template'] . '/users_table_footer.html');
+		include ('templates/' . $config['template'] . '/table_footer.html');
 		
 		//приплюсовываем трафик удаленных пользователей
         $balance = $this->Balance('@DELETED@',$month);
@@ -903,41 +903,46 @@ function disconnect_user($username)
 	curl_close($ch);
 }
 
-function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit) {
-/*
-1 - Имя пользователя уже занято
-  - Имя пользователя пропущено
-2 - Неправильно введены данные в поле tcp-порты
-3 - Неправильно введены данные в поле udp-порты
-4 - IP-адрес занят
-5 - Неправильно введен IP-адрес
-6 - Не введен лимит для лимитированного аккаунта
-ok - Проверка прошла успешно
-*/
+function CheckData ($UserName,$tcp_ports,$udp_ports,$ip_addr,$limit_type,$limit, $mode = 'add') 
+{
+	/*
+	1 - Имя пользователя уже занято
+  	  - Имя пользователя пропущено
+	2 - Неправильно введены данные в поле tcp-порты
+	3 - Неправильно введены данные в поле udp-порты
+	4 - IP-адрес занят
+	5 - Неправильно введен IP-адрес
+	6 - Не введен лимит для лимитированного аккаунта
+	ok - Проверка прошла успешно
+	*/
 
-$db = new DB ();
-$page = new Page ();
-$db->connect();
+	$db = new DB ();
+	$page = new Page ();
+	$db->connect();
+	
+	GLOBAL $l_forms;
 
-//1
-if (empty($UserName)) {
-$page->message($l_forms['no_login']);
-exit;
-}
+	//1
+	if ( (empty($UserName)) AND ($mode == 'add') ) 
+	{
+		$page->message($l_forms['no_login']);
+		exit;
+	}
 
-$result = $db->query("SELECT * FROM `radcheck` WHERE `username` = '".$UserName."'");
-if ($db->num_rows($result) > 0) {
-$page->message($l_forms['login_used']);
-exit;
-}
+	$result = $db->query("SELECT * FROM `radcheck` WHERE `username` = '".$UserName."'");
+	if ( ($db->num_rows($result) > 0)  AND ($mode == 'add') ) 
+	{
+		$page->message($l_forms['login_used']);
+		exit;
+	}
 
-//4
-$result = $db->query("SELECT * FROM `radreply` WHERE `value` = '".$ip_addr."' AND `attribute` = 'Framed-IP-Address'");
-if ($db->num_rows($result) > 0) {
-$page->message($l_forms['ip_used']);
-exit;
-}
-
+	//4
+	$result = $db->query("SELECT * FROM `radreply` WHERE `value` = '".$ip_addr."' AND `attribute` = 'Framed-IP-Address'");
+	if ($db->num_rows($result) > 0) 
+	{
+		$page->message($l_forms['ip_used']);
+		exit;
+	}
 }
 
 function get_ip_by_name ($UserName) {
@@ -1039,6 +1044,42 @@ if ($mode == 'time') {
 
 
 return $bytes;
+}
+
+function BuildUserOptsTpl ()
+{
+	$db = new DB ();
+	$db->connect();
+	
+	//Составляем массив логинов и апишников
+	$logins_res  = $db->query("SELECT radcheck.UserName FROM `radcheck`");
+	$logins = $db->Fetch_array($logins_res);	
+	for ($i=0; $i < $db->Num_rows($logins_res); $i++)
+	{
+		$tpl['logins'] .= "logins[$i]='".$logins["UserName"]."';\n";
+		$tpl['ips'] .= "ips[$i]='".$this->get_ip_by_name($logins["UserName"])."';\n";
+		$logins = $db->Fetch_array($logins_res);
+	}
+
+	//Составляем список групп
+	$groups_res  = $db->query("SELECT groupname FROM `vpnmsgroupreply`");
+	$groups = $db->Fetch_array($groups_res);	
+	for ($i=0; $i < $db->Num_rows($groups_res); $i++)
+	{
+		$tpl['groups'] .= "<OPTION VALUE='". $groups['groupname'] ."'>". $groups['groupname'] ."\n";
+		$groups = $db->Fetch_array($groups_res);
+	}	
+		
+	//Составляем список скоростей
+	$bandwidth_res  = $db->query("SELECT * FROM `bandwidth`");
+	$bandwidth = $db->Fetch_array($bandwidth_res);	
+	for ($i=0; $i < $db->Num_rows($bandwidth_res); $i++)
+	{
+		$tpl['bandwidth'] .= "<OPTION VALUE='". $bandwidth['bw_id'] ."'>". $bandwidth['bandwidth_name'] ."\n";
+		$bandwidth = $db->Fetch_array($bandwidth_res);
+	}	
+	
+	return $tpl;
 }
 
 }
