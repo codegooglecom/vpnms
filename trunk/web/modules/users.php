@@ -40,33 +40,7 @@ else
 		
 		$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group']);
 		
-		//Составляем массив логинов и апишников
-		$logins_res  = $db->query("SELECT radcheck.UserName FROM `radcheck`");
-		$logins = $db->Fetch_array($logins_res);	
-		for ($i=0; $i < $db->Num_rows($logins_res); $i++)
-		{
-  			$tpl_logins .= "logins[$i]='".$logins["UserName"]."';\n";
-  			$tpl_ips .= "ips[$i]='".$billing->get_ip_by_name($logins["UserName"])."';\n";
-  			$logins = $db->Fetch_array($logins_res);
-		}
-
-		//Составляем список групп
-		$groups_res  = $db->query("SELECT groupname FROM `vpnmsgroupreply`");
-		$groups = $db->Fetch_array($groups_res);	
-		for ($i=0; $i < $db->Num_rows($groups_res); $i++)
-		{
-  			$tpl_groups .= "<OPTION VALUE='". $groups['groupname'] ."'>". $groups['groupname'] ."\n";
-  			$groups = $db->Fetch_array($groups_res);
-		}	
-		
-		//Составляем список скоростей
-		$bandwidth_res  = $db->query("SELECT * FROM `bandwidth`");
-		$bandwidth = $db->Fetch_array($bandwidth_res);	
-		for ($i=0; $i < $db->Num_rows($bandwidth_res); $i++)
-		{
-  			$tpl_bandwidth .= "<OPTION VALUE='". $bandwidth['bw_id'] ."'>". $bandwidth['bandwidth_name'] ."\n";
-  			$bandwidth = $db->Fetch_array($bandwidth_res);
-		}	
+		$UsersOptsTpl = $billing->BuildUserOptsTpl();
 		
 		include ('templates/' . $config['template'] . '/new_user_table.html');
 	}
@@ -145,32 +119,8 @@ else
             $ipaddress = $billing->get_ip_by_name($_GET['UserName']);
             $balance = $billing->balance($_GET['UserName']);
             
-            //Составляем список групп
-			$groups_res  = $db->query("SELECT groupname FROM `vpnmsgroupreply`");
-			$groups = $db->Fetch_array($groups_res);	
-			for ($i=0; $i < $db->Num_rows($groups_res); $i++)
-			{
-  				$selected = "";
-  				if ($balance['groupname'] == $groups['groupname'])
-  					$selected = "selected";
-				
-				$tpl_groups .= "<OPTION VALUE='". $groups['groupname'] ."' ". $selected .">". $groups['groupname'] ."\n";
-  				$groups = $db->Fetch_array($groups_res);
-			}
-
-			//Составляем список скоростей
-			$bandwidth_res  = $db->query("SELECT * FROM `bandwidth`");
-			$bandwidth = $db->Fetch_array($bandwidth_res);	
-			for ($i=0; $i < $db->Num_rows($bandwidth_res); $i++)
-			{
-  				$selected = "";
-  				if ($balance['bw_id'] == $bandwidth['bw_id'])
-  					$selected = "selected";
-  				
-				$tpl_bandwidth .= "<OPTION VALUE='". $bandwidth['bw_id'] ."' ". $selected .">". $bandwidth['bandwidth_name'] ."\n";
-  				$bandwidth = $db->Fetch_array($bandwidth_res);
-			}	
-			
+			$UsersOptsTpl = $billing->BuildUserOptsTpl();
+						
 			$user_limit = "";
 			$user_out_limit = "";
 			$user_tcp = "";
@@ -190,6 +140,7 @@ else
 		}
 		else if ($_GET['action'] == "save_edit")
 		{
+		
 			/*	
 			 * 	Подготавливаем данные о пользователе в зависимости от того, 
 			 *	персональные у него настройки или настройки группы
@@ -240,6 +191,10 @@ else
                 if (($new_balance <= 0) OR ($new_balance_out <= 0)) 
                     $_POST['accountedit_status'] = 'limit_expire';
             }
+
+            //проверяем данные
+            $billing->CheckData($_POST['accountedit_login'],$_POST['accountedit_tcp'],$_POST['accountedit_udp'],
+								$_POST['accountedit_ipaddr'],$_POST['accountedit_limit_type'],$_POST['accountedit_limit'], 'edit');
             
             //обновляем данные в базе
             $query1 = "UPDATE `radcheck` SET `name` = '". $_POST['accountedit_name'] ."', 

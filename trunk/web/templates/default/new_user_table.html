@@ -2,8 +2,8 @@
 var logins = new Array();
 var ips = new Array();
 
-<?=$tpl_logins;?>
-<?=$tpl_ips;?>
+<?=$UsersOptsTpl['logins'];?>
+<?=$UsersOptsTpl['ips'];?>
 
 function checkReg() {
 var login_used = 0;
@@ -341,7 +341,7 @@ function chng_month()
 	</td>
 	<td width=50%>
 	<SELECT NAME=accountadd_group>
-					<?=$tpl_groups;?>
+					<?=$UsersOptsTpl['groups'];?>
     </SELECT>
 	</td>
 	<td width=17%>
@@ -361,7 +361,7 @@ function chng_month()
 	</td>
 	<td width=50%>
 	<SELECT NAME=accountadd_bw NAME disabled>
-					<?=$tpl_bandwidth;?>
+					<?=$UsersOptsTpl['bandwidth'];?>
     </SELECT>
 	</td>
 	<td width=17%>
