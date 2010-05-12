@@ -85,11 +85,11 @@ int ShowConfig()
 	vpnms_config = LoadConfig();
 	printf("\n[mysql]\nhost = %s\nusername = %s\npassword = %s\ndatabase = %s\nport = %u\n\n[vpnms]\nclose_console = %s\ndaemon_interval = %u\n"
 			"network = %s\nnetmask = %s\naltq = %s\ntransparent_proxy = %s\ntransparent_proxy_port = %u\nhourly_stat = %s\nsql_debug = %s\n"
-			"cmd_debug = %s\npf_file_debug = %s\n\n[vars]\npfctl = %s\necho = %s\nond = %s\nmpd_rc_script = %s\n\n",
+			"cmd_debug = %s\npf_file_debug = %s\ndisconnect_on_crash = %s\n\n[vars]\npfctl = %s\necho = %s\nond = %s\nmpd_rc_script = %s\n\n",
 			vpnms_config.mysql_host, vpnms_config.mysql_username, vpnms_config.mysql_password, vpnms_config.mysql_database, vpnms_config.mysql_port,
 			vpnms_config.vpnms_close_console, vpnms_config.vpnms_daemon_interval, vpnms_config.vpnms_network, vpnms_config.vpnms_netmask, vpnms_config.vpnms_altq,
 			vpnms_config.vpnms_transparent_proxy, vpnms_config.vpnms_transparent_proxy_port, vpnms_config.vpnms_hourly_stat, vpnms_config.vpnms_sql_debug,
-			vpnms_config.vpnms_cmd_debug, vpnms_config.vpnms_pf_file_debug, vpnms_config.vars_pfctl, vpnms_config.vars_echo, vpnms_config.vars_ond, vpnms_config.vars_mpd_rc_script);
+			vpnms_config.vpnms_cmd_debug, vpnms_config.vpnms_pf_file_debug, vpnms_config.vpnms_disconnect_on_crash, vpnms_config.vars_pfctl, vpnms_config.vars_echo, vpnms_config.vars_ond, vpnms_config.vars_mpd_rc_script);
 
 	return 0;
 }
@@ -119,8 +119,6 @@ int main(int argc, char **argv)
     	pthread_t				nf_thread;
     	LLIST					*cur_copy = NULL;
     	LLIST					*last_copy = NULL;
-    	unsigned long int		cycle_start_time;
-    	unsigned long int		SessionTime;
     	struct s_balance		balance;
     	myint					SessId;
     	unsigned long int		SpeedIn;
@@ -299,7 +297,6 @@ int main(int argc, char **argv)
         //daemon cycle...
     	while (1)
         {
-    		cycle_start_time = (unsigned long)time(NULL);
     		sleep(vpnms_config.vpnms_daemon_interval);
 
         	waiting_mutex = 1;
@@ -311,12 +308,25 @@ int main(int argc, char **argv)
             pthread_mutex_unlock(&mutex);
             waiting_mutex = 0;
 
+  	        //обновляем время сессии
+  	        query = malloc(128);
+  	        sprintf(query, "UPDATE sessions SET  "
+							"`SessionTime` = UNIX_TIMESTAMP( ) - sessions.StartTime, "
+							"`StopTime` = UNIX_TIMESTAMP( ) "
+							"WHERE Connected = 1");
+			exec_query_write(query);
+
+            //обнуляем скорость
+  			query = malloc(256);
+  	        sprintf(query, "UPDATE `sessions` SET `Speed_in` = 0, `Speed_out` = 0 WHERE `Connected` = 1");
+  	        exec_query_write(query);
+
           	while (cur_copy != NULL)
            	{
-                //обнуляем скорость
-      			query = malloc(256);
-      	        sprintf(query, "UPDATE `sessions` SET `Speed_in` = 0, `Speed_out` = 0 WHERE `Connected` = 1");
-      	        exec_query_write(query);
+          		char *fcmd;
+          		fcmd = malloc(2048);
+          		sprintf(fcmd, "echo \"%s %lld %lld\" >> /tmp/flows_summ", cur_copy->ip, cur_copy->input, cur_copy->output);
+          		exec_cmd(fcmd);
 
           		// Смотрим последнюю сессию, если ее еще нет - значит еще не успел создасться. Тогда пропускаем этого пользователя
                 // т.к. без добавления правил в цепочку VPNMS все равно трафик не пойдет.
@@ -326,27 +336,9 @@ int main(int argc, char **argv)
 
           		if (SessId != -1)
           		{
-          	        //вычисляем время сессии
-          			query = malloc(256);
-          	        sprintf(query, "SELECT sessions.StartTime, sessions.SessionTime FROM `sessions` WHERE `SessId` = %llu LIMIT 1", SessId);
-
-          	        //strlen( query ) >= 256
-
-          	        res = exec_query(query);
-          	        row = mysql_fetch_row(res);
-          	        SessionTime = (unsigned long)time(NULL) - atoll(row[0]);
-          	        //время, прошедшее с последнего обновления сессии
-          	        TimePassed = (unsigned long)time(NULL) - atoll(row[0]) - atoll(row[1]);
-          	        mysql_free_result(res);
-
-          	        //<tmp>
-          	        if (TimePassed < 0)
-          	        	syslog (LOG_NOTICE, " TimePassed < 0, ahtung! %s %s",__FILE__,__LINE__);
-          	        //</tmp>
-
           	        // Высчитываем среднюю входящуюю и исходящую скорость
-          	        SpeedIn = (cur_copy->input + cur_copy->local_input)/TimePassed;
-          	        SpeedOut = (cur_copy->output + cur_copy->local_output)/TimePassed;
+          	        SpeedIn = (cur_copy->input + cur_copy->local_input)/vpnms_config.vpnms_daemon_interval;
+          	        SpeedOut = (cur_copy->output + cur_copy->local_output)/vpnms_config.vpnms_daemon_interval;
 
           	        // Записываем в сессию данные о трафике, времени сессии, скорость
           			query = malloc(1024);
@@ -356,13 +348,11 @@ int main(int argc, char **argv)
           	        		"`InternetOut` = InternetOut + %llu, "
           	        		"`LocalIn` = LocalIn + %llu,"
           	        		"`LocalOut` = LocalOut + %llu, "
-          	        		"`StopTime` = %lu, "
-          	        		"`SessionTime` = %lu, "
           	        		"`Speed_in` = %lu, "
           	        		"`Speed_out` = %lu "
           	        		"WHERE `SessId` = %llu LIMIT 1",
           	        		cur_copy->input, cur_copy->output, cur_copy->local_input, cur_copy->local_output,
-          	        		(unsigned long)time(NULL), SessionTime, SpeedIn, SpeedOut, SessId);
+          	        		SpeedIn, SpeedOut, SessId);
           	        exec_query_write(query);
 
           	        // Проверяем баланс пользователя, если все прокачал - отключаем
@@ -374,6 +364,7 @@ int main(int argc, char **argv)
           	        	if (strcasecmp(balance.limit_type, LIMIT_TYPE_LIMITED) == 0 )
           	        		if ( (balance.input >= balance.limit) || (balance.output >= balance.out_limit) )
           	        		{
+          	        			syslog (LOG_DEBUG, " limit expired: %s", pUsername);
           	        			cmd = malloc(256);
           	        			sprintf(cmd, "%s %s", vpnms_config.vars_ond, pUsername);
           	        			exec_cmd(cmd);
