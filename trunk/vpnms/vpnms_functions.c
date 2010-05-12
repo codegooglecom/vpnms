@@ -27,13 +27,18 @@ void StopDaemon()
 	MYSQL_RES			*res;
 	MYSQL_ROW			row;
 
-	//очистить правила марушрутизации
-	query = malloc(64);
-	sprintf(query,"SELECT `UserName` FROM `sessions` WHERE `Connected` = '1'");
-	res = exec_query(query);
-	while (row = mysql_fetch_row(res))
-		clear_rules(row[0]);
-	mysql_free_result(res);
+	syslog (LOG_DEBUG, " stopping daemon");
+
+	if ( 0 == strcmp(vpnms_config.vpnms_disconnect_on_crash, "yes") )
+	{
+		//очистить правила марушрутизации
+		query = malloc(64);
+		sprintf(query,"SELECT `UserName` FROM `sessions` WHERE `Connected` = '1'");
+		res = exec_query(query);
+		while (row = mysql_fetch_row(res))
+			clear_rules(row[0]);
+		mysql_free_result(res);
+	}
 
 	unlink(PIDFILE);
 	syslog (LOG_NOTICE, " stopped");
@@ -64,6 +69,7 @@ struct s_vpnms_config LoadConfig()
 	v_config.vpnms_sql_debug = "no";
 	v_config.vpnms_cmd_debug = "no";
 	v_config.vpnms_pf_file_debug = "no";
+	v_config.vpnms_disconnect_on_crash = "yes";
 
 	v_config.vars_pfctl = "/sbin/pfctl";
 	v_config.vars_echo = "/bin/echo";
@@ -115,6 +121,8 @@ struct s_vpnms_config LoadConfig()
 			v_config.vpnms_cmd_debug = config_get_string (config_f, "vpnms", "cmd_debug");
 		if (config_get_string (config_f, "vpnms", "pf_file_debug") != NULL)
 			v_config.vpnms_pf_file_debug = config_get_string (config_f, "vpnms", "pf_file_debug");
+		if (config_get_string (config_f, "vpnms", "disconnect_on_crash") != NULL)
+			v_config.vpnms_disconnect_on_crash = config_get_string (config_f, "vpnms", "disconnect_on_crash");
 
 		if (config_get_string (config_f, "vars", "pfctl") != NULL)
 			v_config.vars_pfctl = config_get_string (config_f, "vars", "pfctl");
@@ -386,6 +394,14 @@ struct s_balance check_balance(char *username)
 int clear_rules(char *username)
 {
 	char *cmd;
+
+	syslog (LOG_DEBUG, " deleting rules. Username: %s", username);
+
+	if (username == NULL)
+	{
+		syslog (LOG_DEBUG, " error. Username: NULL");
+		return 0;
+	}
 
 	cmd = malloc(512);
 	sprintf(cmd, "%s -a \"%s/%s\" -F rules", vpnms_config.vars_pfctl, PF_VPNMS_ANCHOR, username);

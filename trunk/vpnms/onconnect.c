@@ -35,19 +35,29 @@ int main (int argc, char **argv)
 	MYSQL_RES	*res;
 	int			rows = 0;
 
+	sleep(2);
+
+	printf("starting with parametrs: %s %s %s \n", argv[1], argv[2], argv[3]);
+
 	//если демон не запущен - выйти
 	if ( check_daemon() == 0)
 	{
 		syslog (LOG_ERR, " daemon not started");
-        exit(EXIT_FAILURE);
+		printf("daemon not started...\n");
+//        exit(EXIT_FAILURE);
 	}
+
+	printf("daemon checked...\n");
 
 	//если переданы не все параметры - выйти
 	if (argc < 4)
 	{
 		syslog (LOG_ERR, " missing argument");
+		printf("missing argument...\n");
         exit(EXIT_FAILURE);
 	}
+
+	printf("arguments checked...\n");
 
 	if_name = argv[1];
 	v_ip = argv[2];
@@ -55,6 +65,8 @@ int main (int argc, char **argv)
 
     //loading config
     vpnms_config = LoadConfig();
+
+    printf("config loaded...\n");
 
 	//закрываем незакрытые сессии, если вдруг такие образовались
 	query = malloc(256);
@@ -70,8 +82,12 @@ int main (int argc, char **argv)
 		exec_query(query);
 	}
 
+	printf("old sessions closed...\n");
+
 	//чистим правила, если вдруг остались старые
-	clear_rules(username);
+	//clear_rules(username);
+
+	//printf("old rules cleared...\n");
 
 	//открываем сессию
 	query = malloc(512);
@@ -81,8 +97,12 @@ int main (int argc, char **argv)
 			, username, (unsigned long)time(NULL), v_ip, if_name);
 	exec_query(query);
 
+	printf("new session openned...\n");
+
 	//добавляем правила в зависимости от статуса
 	add_rules(username, if_name);
+
+	printf("rules added...\n");
 
 	exit(EXIT_SUCCESS);
 }

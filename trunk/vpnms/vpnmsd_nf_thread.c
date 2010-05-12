@@ -101,12 +101,12 @@ void * vpnmsd_nf_thread(void * arg)
             	//исходящий трафик
             	if ( is_it_vpn(src_ip, vpnms_config.vpnms_netmask, vpnms_config.vpnms_network) == 1 )
             	{
-                    //Добавляем поток в базу, для ежечасного парсинга
+            		local_flow = 0;
+                	if(is_it_local(dst_ip)) local_flow = 1;
+
+            		//Добавляем поток в базу, для ежечасного парсинга
                     if ( 0 == strcasecmp(vpnms_config.vpnms_hourly_stat, "yes") )
                     {
-                    	local_flow = 0;
-                    	if(is_it_local(dst_ip)) local_flow = 1;
-
                         query = malloc(512);
                         pUsername = username_by_ip(src_ip);
 
@@ -137,7 +137,7 @@ void * vpnmsd_nf_thread(void * arg)
 					if ( nf_list_search(&cur, src_ip) != NULL )
 					{
 						//если пункт назначения локальный адрес
-						if (is_it_local(dst_ip) == 1)
+						if (local_flow == 1)
 							cur->local_output = cur->local_output + ntohl (pData->r[i].octets );
 						else
 							cur->output = cur->output + ntohl (pData->r[i].octets );
@@ -146,7 +146,7 @@ void * vpnmsd_nf_thread(void * arg)
 					//если нет - добавляем в список
 					{
 						//если пункт назначения локальный адрес
-						if (is_it_local(dst_ip) == 1)
+						if (local_flow == 1)
 							last = nf_list_add(&cur, src_ip, 0, 0, 0, ntohl (pData->r[i].octets ));
 						else
 							last = nf_list_add(&cur, src_ip, 0, ntohl (pData->r[i].octets ), 0, 0);
@@ -156,12 +156,13 @@ void * vpnmsd_nf_thread(void * arg)
             	//входящий трафик
             	if ( is_it_vpn(dst_ip, vpnms_config.vpnms_netmask, vpnms_config.vpnms_network) == 1 )
             	{
-                    //Добавляем поток в базу, для ежечасного парсинга
+
+                	local_flow = 0;
+                	if(is_it_local(src_ip)) local_flow = 1;
+
+            		//Добавляем поток в базу, для ежечасного парсинга
                     if ( 0 == strcasecmp(vpnms_config.vpnms_hourly_stat, "yes") )
                     {
-                    	local_flow = 0;
-                    	if(is_it_local(src_ip)) local_flow = 1;
-
                     	query = malloc(512);
                     	pUsername = username_by_ip(dst_ip);
 
@@ -192,7 +193,7 @@ void * vpnmsd_nf_thread(void * arg)
 					if ( nf_list_search(&cur, dst_ip) != NULL )
 					{
 						//если источник локальный адрес
-						if (is_it_local(src_ip) == 1)
+						if (local_flow == 1)
 							cur->local_input = cur->local_input + ntohl (pData->r[i].octets );
 						else
 							cur->input = cur->input + ntohl (pData->r[i].octets );
@@ -201,7 +202,7 @@ void * vpnmsd_nf_thread(void * arg)
 					//если нет - добавляем в список
 					{
 						//если источник локальный адрес
-						if (is_it_local(src_ip) == 1)
+						if (local_flow == 1)
 							last = nf_list_add(&cur, dst_ip, 0, 0, ntohl (pData->r[i].octets ), 0);
 						else
 							last = nf_list_add(&cur, dst_ip, ntohl (pData->r[i].octets ), 0, 0, 0);
