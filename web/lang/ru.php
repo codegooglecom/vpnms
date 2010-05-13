@@ -182,4 +182,5 @@ $l_tables['connects'] = "Соединений";
 $l_tables['bytes'] = "Байт";
 $l_tables['url'] = "Сайт";
 $l_tables['file'] = "Файл";
+$l_tables['active_sessions'] = "Активные сессии";
 ?>

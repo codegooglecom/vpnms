@@ -2,7 +2,7 @@
 # $@ - имя текущей цели
 
 CC=gcc
-CCFLAGS=-L/usr/local/lib/mysql -Wall
+CCFLAGS=-L/usr/local/lib/mysql -Wall -DDEBUG
 BINDIR=bin
 RCDDIR=rc.d
 INSTBIN=/usr/local/bin

@@ -1046,7 +1046,11 @@ if ($mode == 'time') {
 return $bytes;
 }
 
-function BuildUserOptsTpl ()
+/*
+ *  Если в ф-ию передается IP-адрес, то она не добавляет его в массив адресов
+ */
+
+function BuildUserOptsTpl ($ipaddr, $group, $bw)
 {
 	$db = new DB ();
 	$db->connect();
@@ -1057,7 +1061,9 @@ function BuildUserOptsTpl ()
 	for ($i=0; $i < $db->Num_rows($logins_res); $i++)
 	{
 		$tpl['logins'] .= "logins[$i]='".$logins["UserName"]."';\n";
-		$tpl['ips'] .= "ips[$i]='".$this->get_ip_by_name($logins["UserName"])."';\n";
+		$ipaddr2 = $this->get_ip_by_name($logins["UserName"]);
+		if ($ipaddr2 != $ipaddr)
+			$tpl['ips'] .= "ips[$i]='".$ipaddr2."';\n";
 		$logins = $db->Fetch_array($logins_res);
 	}
 
@@ -1066,7 +1072,11 @@ function BuildUserOptsTpl ()
 	$groups = $db->Fetch_array($groups_res);	
 	for ($i=0; $i < $db->Num_rows($groups_res); $i++)
 	{
-		$tpl['groups'] .= "<OPTION VALUE='". $groups['groupname'] ."'>". $groups['groupname'] ."\n";
+		$selected = '';
+		if ($groups['groupname'] == $group)
+			$selected = 'selected';
+		
+		$tpl['groups'] .= "<OPTION VALUE='". $groups['groupname'] ."' ".$selected.">". $groups['groupname'] ."\n";
 		$groups = $db->Fetch_array($groups_res);
 	}	
 		
@@ -1075,7 +1085,11 @@ function BuildUserOptsTpl ()
 	$bandwidth = $db->Fetch_array($bandwidth_res);	
 	for ($i=0; $i < $db->Num_rows($bandwidth_res); $i++)
 	{
-		$tpl['bandwidth'] .= "<OPTION VALUE='". $bandwidth['bw_id'] ."'>". $bandwidth['bandwidth_name'] ."\n";
+		$selected = '';
+		if ($bandwidth['bw_id'] == $bw)
+			$selected = 'selected';
+		
+		$tpl['bandwidth'] .= "<OPTION VALUE='". $bandwidth['bw_id'] ."' ".$selected.">". $bandwidth['bandwidth_name'] ."\n";
 		$bandwidth = $db->Fetch_array($bandwidth_res);
 	}	
 	

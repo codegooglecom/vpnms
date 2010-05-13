@@ -175,7 +175,7 @@ int main ()
 
     	query = malloc(1024);
     	sprintf(query,
-    			"INSERT INTO `radius`.`hourlystat` ("
+    			"INSERT INTO `hourlystat` ("
 					"`id` ,"
 					"`timestamp` ,"
 					"`owner` ,"
@@ -206,7 +206,7 @@ int main ()
 
     	query = malloc(1024);
     	sprintf(query,
-    			"INSERT INTO `radius`.`hourlystat` ("
+    			"INSERT INTO `hourlystat` ("
 					"`id` ,"
 					"`timestamp` ,"
 					"`owner` ,"
@@ -269,7 +269,7 @@ int main ()
 
     	query = malloc(1024);
     	sprintf(query,
-    			"INSERT INTO `radius`.`hourlystat` ("
+    			"INSERT INTO `hourlystat` ("
 					"`id` ,"
 					"`timestamp` ,"
 					"`owner` ,"
@@ -300,7 +300,7 @@ int main ()
 
     	query = malloc(1024);
     	sprintf(query,
-    			"INSERT INTO `radius`.`hourlystat` ("
+    			"INSERT INTO `hourlystat` ("
 					"`id` ,"
 					"`timestamp` ,"
 					"`owner` ,"

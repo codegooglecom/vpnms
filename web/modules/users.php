@@ -40,7 +40,7 @@ else
 		
 		$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group']);
 		
-		$UsersOptsTpl = $billing->BuildUserOptsTpl();
+		$UsersOptsTpl = $billing->BuildUserOptsTpl('','','');
 		
 		include ('templates/' . $config['template'] . '/new_user_table.html');
 	}
@@ -119,7 +119,7 @@ else
             $ipaddress = $billing->get_ip_by_name($_GET['UserName']);
             $balance = $billing->balance($_GET['UserName']);
             
-			$UsersOptsTpl = $billing->BuildUserOptsTpl();
+			$UsersOptsTpl = $billing->BuildUserOptsTpl($ipaddress, $balance['groupname'], $balance['bw_id']);
 						
 			$user_limit = "";
 			$user_out_limit = "";
@@ -192,9 +192,15 @@ else
                     $_POST['accountedit_status'] = 'limit_expire';
             }
 
+			//Если апишник не изменился, то обнуляем его, чтобы успешно пройти проверку
+            $ipaddress = $billing->get_ip_by_name($_POST['accountedit_login']);
+            $ch_ipaddress = $_POST['accountedit_ipaddr'];
+            if ($ipaddress == $ch_ipaddress)
+            	$ch_ipaddress = '';
+            
             //проверяем данные
             $billing->CheckData($_POST['accountedit_login'],$_POST['accountedit_tcp'],$_POST['accountedit_udp'],
-								$_POST['accountedit_ipaddr'],$_POST['accountedit_limit_type'],$_POST['accountedit_limit'], 'edit');
+								$ch_ipaddress,$_POST['accountedit_limit_type'],$_POST['accountedit_limit'], 'edit');
             
             //обновляем данные в базе
             $query1 = "UPDATE `radcheck` SET `name` = '". $_POST['accountedit_name'] ."', 

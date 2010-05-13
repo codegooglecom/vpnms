@@ -44,7 +44,10 @@ int main (int argc, char **argv)
 	{
 		syslog (LOG_ERR, " daemon not started");
 		printf("daemon not started...\n");
-//        exit(EXIT_FAILURE);
+
+		#ifdef NDEBUG
+        exit(EXIT_FAILURE);
+		#endif
 	}
 
 	printf("daemon checked...\n");
