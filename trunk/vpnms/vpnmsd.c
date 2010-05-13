@@ -21,64 +21,13 @@
 
 void SigHandler()
 {
-	if (waiting_mutex == 1)
-		StopDaemon();
-	else
-	{
-		extern short received_kill_sig;
-		received_kill_sig = 1;
-	}
+	extern short received_kill_sig;
+	received_kill_sig = 1;
 }
 
 void * vpnmsd_nf_thread(void * arg);
 
 #define NF_BUFLEN 2048
-
-LLIST *nf_list_add(LLIST **p, char *ip, myint input, myint output, myint local_input, myint local_output)
-{
-	LLIST *n = (LLIST *) malloc(sizeof(LLIST));
-	if (n == NULL)
-		return NULL;
-
-	n->next = *p;
-	*p = n;
-	n->input = input;
-	n->output = output;
-	n->local_input = local_input;
-	n->local_output = local_output;
-	n->ip = malloc (strlen(ip)+1);
-	strcpy(n->ip,ip);
-
-	return *p;
-}
-
-LLIST *nf_list_search(LLIST **n, char *ip)
-{
-	while (*n != NULL)
-	{
-		if (strcasecmp ( (*n)->ip, ip ) == 0)
-		{
-			return *n;
-		}
-		n = &(*n)->next;
-	}
-	return NULL;
-}
-
-void nf_list_destroy(LLIST **n)
-{
-	LLIST *p = *n;
-
-	while ( p )
-	{
-		LLIST *to_delete = p;
-		p = p->next;
-		free( to_delete->ip );
-		free( to_delete );
-	}
-
-	*n = NULL;
-}
 
 int ShowConfig()
 {
@@ -94,15 +43,10 @@ int ShowConfig()
 	return 0;
 }
 
-LLIST	*cur = NULL;
-LLIST	*last = NULL;
-
 //struct s_vpnms_config	vpnms_config;
 struct s_subnets		*subnets;
 size_t					num_subnets = 0;
-pthread_mutex_t			mutex = PTHREAD_MUTEX_INITIALIZER;
 int						nf_thread_initialized = 0;
-int						waiting_mutex = 0;
 MYSQL 					mysql;
 
 int main(int argc, char **argv)
@@ -110,20 +54,21 @@ int main(int argc, char **argv)
         static int 			opt, pidfd;
         pid_t 					pid, sid;
         char 					chpid[6];
-        char 					rpid[6];
         struct sigaction		act;
     	MYSQL_RES 				*res;
     	MYSQL_ROW 				row;
     	size_t					rows;
     	char 					*query;
     	pthread_t				nf_thread;
-    	LLIST					*cur_copy = NULL;
-    	LLIST					*last_copy = NULL;
     	struct s_balance		balance;
     	myint					SessId;
+    	myint					summ_in;
+    	myint					summ_out;
+    	myint					summ_loc_in;
+    	myint					summ_loc_out;
+    	unsigned long int		cur_uts;
     	unsigned long int		SpeedIn;
     	unsigned long int		SpeedOut;
-    	unsigned long int		TimePassed;
     	char					*cmd;
     	char					*pUsername;
     	char					*pStatus;
@@ -155,22 +100,7 @@ int main(int argc, char **argv)
 						exit(EXIT_SUCCESS);
 
                 case 's':
-						pidfd = open(PIDFILE, O_RDONLY);
-						if (pidfd == -1)
-				        {
-				        	syslog (LOG_ERR, " error in open %s, daemon not started?", PIDFILE);
-				        	exit(EXIT_FAILURE);
-				        }
-						if ( read(pidfd, &rpid, 5) < 1 )
-						{
-				        	syslog (LOG_ERR, " error in read %s", PIDFILE);
-				        	exit(EXIT_FAILURE);
-						}
-						if ( kill (atoi(rpid), SIGTERM) == -1 )
-						{
-				        	syslog (LOG_ERR, " cannot send termination signal to vpnmsd");
-				        	exit(EXIT_FAILURE);
-						}
+						KillDaemon();
 						exit(EXIT_SUCCESS);
 
                 case 'c':
@@ -299,16 +229,7 @@ int main(int argc, char **argv)
         {
     		sleep(vpnms_config.vpnms_daemon_interval);
 
-        	waiting_mutex = 1;
-			pthread_mutex_lock(&mutex);
-       		cur_copy = last;
-            last_copy = last;
-            cur = NULL;
-            last = NULL;
-            pthread_mutex_unlock(&mutex);
-            waiting_mutex = 0;
-
-  	        //обновляем время сессии
+            //обновляем время сессии
   	        query = malloc(128);
   	        sprintf(query, "UPDATE sessions SET  "
 							"`SessionTime` = UNIX_TIMESTAMP( ) - sessions.StartTime, "
@@ -321,24 +242,83 @@ int main(int argc, char **argv)
   	        sprintf(query, "UPDATE `sessions` SET `Speed_in` = 0, `Speed_out` = 0 WHERE `Connected` = 1");
   	        exec_query_write(query);
 
-          	while (cur_copy != NULL)
-           	{
-          		char *fcmd;
-          		fcmd = malloc(2048);
-          		sprintf(fcmd, "echo \"%s %lld %lld\" >> /tmp/flows_summ", cur_copy->ip, cur_copy->input, cur_copy->output);
-          		exec_cmd(fcmd);
+  	        cur_uts = (unsigned long)time(NULL);
 
-          		// Смотрим последнюю сессию, если ее еще нет - значит еще не успел создасться. Тогда пропускаем этого пользователя
-                // т.к. без добавления правил в цепочку VPNMS все равно трафик не пойдет.
-          		pUsername = username_by_ip(cur_copy->ip);
-      	        SessId = get_sess_id(pUsername);
-      	        free(pUsername);
+  	        /*
+  	         *  Берем первый попавшийся поток. Если потоков нет - выходим, если есть -
+  	         *  продолжаем. Смотрим чей поток. Вычисляем последнюю сессию пользователя,
+  	         *  если существует, суммируем трафик по потокам, которые были записаны
+  	         *  раньше текущего времени, вычисляем нагрузку на канал и после записываем данные
+  	         *  в сессию. Дальше проверяем исчерпавших лимит, а затем удаляем обработанные
+  	         *  потоки.
+  	         */
 
-          		if (SessId != -1)
-          		{
-          	        // Высчитываем среднюю входящуюю и исходящую скорость
-          	        SpeedIn = (cur_copy->input + cur_copy->local_input)/vpnms_config.vpnms_daemon_interval;
-          	        SpeedOut = (cur_copy->output + cur_copy->local_output)/vpnms_config.vpnms_daemon_interval;
+  	        while (1)
+  	        {
+      			summ_in = 0;
+      			summ_out = 0;
+      			summ_loc_in = 0;
+      			summ_loc_out = 0;
+
+  	        	//выбираем первую попавшуюся запись из временной таблицы
+  	        	query = malloc(512);
+  	        	sprintf(query, "SELECT Owner FROM `flows_tmp` WHERE TimeStamp < '%lu' ORDER BY TimeStamp LIMIT 1", cur_uts);
+  	        	res = exec_query(query);
+
+  	        	//если потоки кончились - выходим из цикла
+  	        	if (mysql_num_rows(res) < 1)
+  	        	{
+  	        		mysql_free_result(res);
+  	        		break;
+  	        	}
+
+  	        	row = mysql_fetch_row(res);
+  	        	pUsername = strdup(row[0]);
+  	        	mysql_free_result(res);
+
+  	        	/*
+  	        	 * Смотрим последнюю сессию, если ее еще нет - значит еще не успел создасться. Тогда пропускаем этого пользователя
+  	        	 *  т.к. без добавления правил в цепочку VPNMS все равно трафик не пойдет.
+  	        	 */
+
+  	        	SessId = get_sess_id(pUsername);
+  	        	if (SessId != -1)
+  	        	{
+
+  	        		query = malloc(2048);
+  	        		sprintf(query,"SELECT "
+									"(SELECT SUM(Bytes) FROM `flows_tmp` WHERE DstIP LIKE '10.%%.%%.%%' AND Local = 0 AND Owner = '%s' AND TimeStamp < %lu) AS sumin, "
+									"(SELECT SUM(Bytes) FROM `flows_tmp` WHERE SrcIP LIKE '10.%%.%%.%%' AND Local = 0 AND Owner = '%s' AND TimeStamp < %lu) AS sumout, "
+									"(SELECT SUM(Bytes) FROM `flows_tmp` WHERE DstIP LIKE '10.%%.%%.%%' AND Local = 1 AND Owner = '%s' AND TimeStamp < %lu) AS sumlocin, "
+									"(SELECT SUM(Bytes) FROM `flows_tmp` WHERE SrcIP LIKE '10.%%.%%.%%' AND Local = 1 AND Owner = '%s' AND TimeStamp < %lu) AS sumlocout",
+									pUsername, cur_uts, pUsername, cur_uts, pUsername, cur_uts, pUsername, cur_uts);
+
+
+  	        		res = exec_query(query);
+
+  	        		if ( mysql_num_rows(res) < 1 )
+  	        		{
+  	        			mysql_free_result(res);
+  	        			syslog (LOG_ERR, " error in select SUM. Username: %s", pUsername);
+  	        		}
+
+  	        		else
+  	        		{
+  	        			row = mysql_fetch_row(res);
+  	        			if ( row[0] != NULL )
+  	        				summ_in = atoll(row[0]);
+  	        			if ( row[1] != NULL )
+  	        				summ_out = atoll(row[1]);
+  	        			if ( row[2] != NULL )
+  	        				summ_loc_in = atoll(row[2]);
+  	        			if ( row[3] != NULL )
+  	        				summ_loc_out = atoll(row[3]);
+
+  	        			mysql_free_result(res);
+  	        		}
+
+  	        		SpeedIn = (summ_in + summ_loc_in)/vpnms_config.vpnms_daemon_interval;
+  	        		SpeedOut = (summ_out + summ_loc_out)/vpnms_config.vpnms_daemon_interval;
 
           	        // Записываем в сессию данные о трафике, времени сессии, скорость
           			query = malloc(1024);
@@ -351,13 +331,12 @@ int main(int argc, char **argv)
           	        		"`Speed_in` = %lu, "
           	        		"`Speed_out` = %lu "
           	        		"WHERE `SessId` = %llu LIMIT 1",
-          	        		cur_copy->input, cur_copy->output, cur_copy->local_input, cur_copy->local_output,
+          	        		summ_in, summ_out, summ_loc_in, summ_loc_out,
           	        		SpeedIn, SpeedOut, SessId);
           	        exec_query_write(query);
 
           	        // Проверяем баланс пользователя, если все прокачал - отключаем
-          	        pUsername = username_by_ip(cur_copy->ip);
-          	        pStatus = check_status(pUsername);
+                 	pStatus = check_status(pUsername);
           	        balance = check_balance(pUsername);
 
           	        if ( strcasecmp(pStatus, STATUS_WORKING) == 0)
@@ -371,16 +350,16 @@ int main(int argc, char **argv)
           	        		}
 
 					free(balance.limit_type);
-					free(pUsername);
 					free(pStatus);
-          		}
-          		cur_copy = cur_copy->next;
-           	}
+				}
 
-         	//освобождаем память
-          	nf_list_destroy (&last_copy);
-           	cur_copy = NULL;
-           	last_copy = NULL;
+  	        	//Удаляем обработанные потоки
+  	        	query = malloc(512);
+  	        	sprintf(query, "DELETE FROM `flows_tmp` WHERE `Owner` = '%s' AND `TimeStamp` < %lu", pUsername, cur_uts);
+  	        	exec_query_write(query);
+
+  	        	free(pUsername);
+  	        }
 
           	if ( received_kill_sig == 1 ) StopDaemon();
         }

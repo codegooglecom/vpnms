@@ -33,7 +33,11 @@ else
 {
 	if (empty($_GET['action'])) 
 	{
-		$result  = $db->query("SELECT * FROM sessions WHERE `Connected` = 1 ORDER BY `SessId`");
+		$active = '';
+		if($_GET['mode'] == 'active')
+			$active = " AND ( `Speed_in` > ".$config['active_session']." OR `Speed_out` > ".$config['active_session']." )";
+		
+		$result  = $db->query("SELECT * FROM sessions WHERE `Connected` = 1 ".$active." ORDER BY `SessId`");
        	$num_results = $db->Num_rows($result);
 
        	include ('templates/' . $config['template'] . '/online_table_header.html');

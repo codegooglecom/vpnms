@@ -92,15 +92,6 @@ struct s_vpnms_config
 
 typedef unsigned long long int myint;
 
-typedef struct node {
-	char *ip;
-	myint input;
-	myint output;
-	myint local_input;
-	myint local_output;
-	struct node *next;
-} LLIST;
-
 struct s_balance {
 	char	*limit_type;
 	myint	limit;
@@ -110,13 +101,6 @@ struct s_balance {
 	myint	local_input;
 	myint	local_output;
 };
-
-LLIST *nf_list_add(LLIST **p, char *ip, myint input, myint output, myint local_input, myint local_output);
-LLIST *nf_list_search(LLIST **n, char *ip);
-void nf_list_destroy(LLIST **n);
-
-extern LLIST	*cur;
-extern LLIST	*last;
 
 extern struct s_vpnms_config	vpnms_config;
 struct s_vpnms_config	vpnms_config;

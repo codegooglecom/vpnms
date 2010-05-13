@@ -55,6 +55,8 @@ $config['precision'] = 2;
 $config['time_correction'] = 0;
 $config['session_ttl'] = 5 * 60;
 $config['unix_time'] = mktime();
+$config['active_session'] = 2048;
+$config['active_ses_refresh'] = 10;
 //mpd
 $config['mpd_url'] = "http://10.0.15.5:5006";
 $config['mpd_user'] = "admin";

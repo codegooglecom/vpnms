@@ -45,6 +45,31 @@ void StopDaemon()
 	exit(EXIT_SUCCESS);
 }
 
+void KillDaemon()
+{
+	char		rpid[6];
+	int			pidfd;
+
+	pidfd = open(PIDFILE, O_RDONLY);
+	if (pidfd == -1)
+    {
+    	syslog (LOG_ERR, " error opening file %s, the daemon is not running?", PIDFILE);
+    	exit(EXIT_FAILURE);
+    }
+	if ( read(pidfd, &rpid, 5) < 1 )
+	{
+    	syslog (LOG_ERR, " error reading file %s", PIDFILE);
+    	exit(EXIT_FAILURE);
+	}
+	if ( kill (atoi(rpid), SIGTERM) == -1 )
+	{
+    	syslog (LOG_ERR, " cannot send termination signal to vpnmsd");
+    	exit(EXIT_FAILURE);
+	}
+
+	close(pidfd);
+}
+
 struct s_vpnms_config LoadConfig()
 {
 	struct s_vpnms_config v_config;
@@ -175,14 +200,14 @@ MYSQL_RES *exec_query(char *query)
 			vpnms_config.mysql_database, vpnms_config.mysql_port, NULL, 0))
 	{
 		syslog (LOG_ERR, "Failed to connect to database: Error: %s\n", mysql_error(&mysql));
-		StopDaemon();
+		KillDaemon();
 		exit(EXIT_FAILURE);
 	}
 
     if ( mysql_real_query(&mysql, query, strlen(query)) )
     {
 		syslog (LOG_ERR, "Query failed: Error: %s\n", mysql_error(&mysql));
-		StopDaemon();
+		KillDaemon();
 		exit(EXIT_FAILURE);
 	}
     free(query);
@@ -206,14 +231,14 @@ void exec_query_write(char *query)
 			vpnms_config.mysql_database, vpnms_config.mysql_port, NULL, 0))
 	{
 		syslog (LOG_ERR, "Failed to connect to database: Error: %s\n", mysql_error(&mysql));
-		StopDaemon();
+		KillDaemon();
 		exit(EXIT_FAILURE);
 	}
 
     if ( mysql_real_query(&mysql, query, strlen(query)) )
     {
 		syslog (LOG_ERR, "Query failed: Error: %s\n", mysql_error(&mysql));
-		StopDaemon();
+		KillDaemon();
 		exit(EXIT_FAILURE);
 	}
     free(query);
@@ -340,7 +365,7 @@ struct s_balance check_balance(char *username)
 	if (mysql_num_rows(res) != 1)
 	{
 		syslog (LOG_ERR, "Error: in function check_balance(), check the database for logical errors.\n");
-		StopDaemon();
+		KillDaemon();
 		exit(EXIT_FAILURE);
 	}
 	row = mysql_fetch_row(res);
@@ -395,7 +420,9 @@ int clear_rules(char *username)
 {
 	char *cmd;
 
+	#ifdef DEBUG
 	syslog (LOG_DEBUG, " deleting rules. Username: %s", username);
+	#endif
 
 	if (username == NULL)
 	{
@@ -465,7 +492,7 @@ int add_rules(char *username, char *if_name)
     if (mysql_num_rows(res) < 1)
     {
     	syslog (LOG_ERR, " in function add_rules(): can't read allowed ports, user %s not found", username);
-    	StopDaemon();
+    	KillDaemon();
     	exit(EXIT_FAILURE);
     }
 	row = mysql_fetch_row(res);
@@ -482,7 +509,7 @@ int add_rules(char *username, char *if_name)
 	    if (mysql_num_rows(res) < 1)
 	    {
 	    	syslog (LOG_ERR, " in function add_rules(): can't read bandwidth id, user %s not found", username);
-	    	StopDaemon();
+	    	KillDaemon();
 	    	exit(EXIT_FAILURE);
 	    }
 		row = mysql_fetch_row(res);
@@ -495,7 +522,7 @@ int add_rules(char *username, char *if_name)
 	    if (mysql_num_rows(res) < 1)
 	    {
 	    	syslog (LOG_ERR, " in function add_rules(): can't read bandwidth name, bandwidth id %s not found", bandwidth_id);
-	    	StopDaemon();
+	    	KillDaemon();
 	    	exit(EXIT_FAILURE);
 	    }
 
@@ -519,7 +546,7 @@ int add_rules(char *username, char *if_name)
     if (pf_fd == -1)
     {
     	syslog (LOG_ERR, " error in create %s", pf_file);
-    	StopDaemon();
+//    	KillDaemon();
     	exit(EXIT_FAILURE);
     }
     ftruncate(pf_fd, 0);
