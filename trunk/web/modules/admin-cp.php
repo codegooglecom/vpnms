@@ -208,5 +208,86 @@ else
 			
 		}
 	}
+	else if ($_GET['action'] == 'flows')
+	{
+		if ( empty($_GET['subaction']) )
+		{
+			include ('templates/' . $config['template'] . '/flows_query_form.html');
+			include ('templates/' . $config['template'] . '/admin-cp_menu.html');
+		}
+		else if ( $_GET['subaction'] == 'search' )
+		{	
+			if ($_POST['flows_summ'] == 'on')
+				$select = "SUM(Bytes) as sum ";
+			else
+				$select = "*";
+				
+			if ( ($_POST['flows_owner'] != "any") && (! empty($_POST['flows_owner'])) )
+				$login = " AND `Owner` = '".$_POST['flows_owner']."'";
+
+			if ( ($_POST['flows_ip'] != "any") && (! empty($_POST['flows_ip'])) )
+				$ip = " AND (`SrcIp` = '".$_POST['flows_ip']."' OR `DstIp` = '".$_POST['flows_ip']."' )";
+
+			if ( ($_POST['flows_dstp'] != "any") && (! empty($_POST['flows_dstp'])) )
+				$dstp = " AND `DstPort` = '".$_POST['flows_dstp']."'";
+				
+			if ( ($_POST['flows_srcp'] != "any") && (! empty($_POST['flows_srcp'])) )
+				$srcp = " AND `SrcPort` = '".$_POST['flows_srcp']."'";
+
+			if ( ($_POST['flows_start_date'] != "any") && (! empty($_POST['flows_start_date'])) )
+				$start_date = " AND `TimeStamp` > '".strtotime($_POST['flows_start_date'])."'";
+
+			if ( ($_POST['flows_end_date'] != "any") && (! empty($_POST['flows_end_date'])) )
+				$end_date = " AND `TimeStamp` < '".strtotime($_POST['flows_end_date'])."'";
+				
+			if ( ($_POST['flows_direction'] != "any") && (! empty($_POST['flows_direction'])) )
+				switch ($_POST['flows_direction']) {
+					case "input":
+						$direction = " AND `DstIp` LIKE '10.%.%.%'";
+						break;
+					case "output":
+						$direction = " AND `SrcIp` LIKE '10.%.%.%'";
+						break;
+				}
+
+			if ( ($_POST['flows_type'] != "any") && (! empty($_POST['flows_type'])) )
+				switch ($_POST['flows_type']) {
+					case "local":
+						$type = " AND `Local` = '1'";
+					case "nlocal":
+						$type = " AND `Local` = '0'";
+				}
+				
+			if ( (empty($_GET['flows'])) || ($_GET['flows'] < 1) )
+			{
+				$limit = "0 , 30";
+				$prev_flows = 0;
+				$next_flows = 30;
+			}
+			else
+			{
+				$limit = $_GET['flows']." , 30";
+				$prev_flows = $prev_flows - 30;
+				$next_flows = $next_flows + 30;
+			}
+				
+			$query = "SELECT ".$select." FROM `flows` WHERE 1".$login.$ip.$dstp.$srcp.$start_date.$end_date.$direction.$type." LIMIT ".$limit;
+			echo $query;
+			//$res = $db->query($query);
+			
+			if ($_POST['flows_summ'] == 'on')
+			{
+				$sum = $db->Fetch_array($res);
+				$sum = number_format($sum['sum']/($config['mb']*$config['mb']), $config['precision'], '.', ' '); 			
+				$page->message($l_forms['flows_summ']." <b>".$sum." Mb</b>");
+			}
+			else
+			{
+				
+			}
+			
+			include ('templates/' . $config['template'] . '/admin-cp_menu.html');
+		}
+	}
 }
 ?>

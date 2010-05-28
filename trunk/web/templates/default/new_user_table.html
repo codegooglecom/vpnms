@@ -252,7 +252,7 @@ function chng_month()
 	<input type=text name=accountadd_out_limit maxlength=18 size=20 disabled>
 	</td>
 	<td width=17% bgColor=#d0d0d0>
-	<?=$l_tables['sum_users'];?>
+	<a href="index.php?module=Users&group=<?=$_GET['group'];?>"><?=$l_tables['sum_users'];?></a>
 	</td>
 	<td width=10% bgColor=#bdddc6>
 	<b><?=$account_summ;?></b>
@@ -270,7 +270,7 @@ function chng_month()
 	<input type=text name=accountadd_tcp maxlength=250 size=20 disabled>
 	</td>
 	<td width=17% bgColor=#d0d0d0>
-	<?=$l_tables['sum_work'];?>
+	<a href="index.php?module=Users&group=<?=$_GET['group'];?>&status=working"><?=$l_tables['sum_work'];?></a>
 	</td>
 	<td width=10% bgColor=#bdddc6>
 	<b><?=$working_accounts;?></b>
@@ -288,7 +288,7 @@ function chng_month()
 	<input type=text name=accountadd_udp maxlength=250 size=20 disabled>
 	</td>
 	<td width=17% bgColor=#d0d0d0>
-	<?=$l_tables['sum_blocked'];?>
+	<a href="index.php?module=Users&group=<?=$_GET['group'];?>&status=blocked"><?=$l_tables['sum_blocked'];?></a>
 	</td>
 	<td width=10% bgColor=#bdddc6>
 	<b><?=$blocked_accounts;?></b>
@@ -306,7 +306,7 @@ function chng_month()
 	<input type=text name=accountadd_ipaddr maxlength=15 size=20>
 	</td>
 	<td width=17% bgColor=#d0d0d0>
-	<?=$l_tables['sum_loc_only'];?>
+	<a href="index.php?module=Users&group=<?=$_GET['group'];?>&status=local_only"><?=$l_tables['sum_loc_only'];?></a>
 	</td>
 	<td width=10% bgColor=#bdddc6>
 	<b><?=$localonly_accounts;?></b>
@@ -326,7 +326,7 @@ function chng_month()
     </SELECT>
 	</td>
 	<td width=17% bgColor=#d0d0d0>
-	<?=$l_tables['sum_limit_exp'];?>
+	<a href="index.php?module=Users&group=<?=$_GET['group'];?>&status=limit_expire"><?=$l_tables['sum_limit_exp'];?></a>
 	</td>
 	<td width=10% bgColor=#bdddc6>
 	<b><?=$expire_accounts;?></b>

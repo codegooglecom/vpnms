@@ -44,6 +44,7 @@
 #define REVISION "41"
 #define PIDFILE "/var/run/vpnmsd.pid"
 #define CONFIGFILE "/usr/local/etc/vpnms.conf"
+#define HSTLOCKF "/tmp/hourlystat.lock"
 
 //PF config
 #define PF_VPNMS_ANCHOR "vpnms"
@@ -79,6 +80,7 @@ struct s_vpnms_config
 	char	*vpnms_pf_file_debug;
 	char	*vpnms_hourly_stat;
 	char	*vpnms_disconnect_on_crash;
+	char	*vpnms_keep_flows;
 	unsigned int vpnms_transparent_proxy_port;
 
 	char	*vars_pfctl;

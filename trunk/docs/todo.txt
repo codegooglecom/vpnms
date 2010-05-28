@@ -6,5 +6,8 @@
 3) Посмотреть на тему возможности использовать pppoe вместо/вместе pptp
 http://www.lissyara.su/articles/freebsd/traffic_count/mpd5_pppoe+radius+ng_car+abills/
 
+4) MPD умеет проводить авторизацию через внешнюю программу/скрипт, т.е. есть возможность избавиться
+от FreeRADIUS (External authentication)
+http://mpd.sourceforge.net/doc/mpd63.html#63
 
-
+5) Может быть расширить таблицу flows, чтобы в ней было поле "протокол", а также кол-во пакетов?

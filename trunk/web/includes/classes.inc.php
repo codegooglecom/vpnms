@@ -249,18 +249,28 @@ function mask_2_cidr($mask)
 }
 
 
-function ShowUsers($orderby, $month, $group = '')
+function ShowUsers($orderby, $month, $group = '', $status = '')
 {
 		Global $db, $config, $l_tables, $sum_input, $sum_output, $sum_local_input, $sum_local_output,
 		$working_accounts, $blocked_accounts, $expire_accounts, $localonly_accounts, $account_summ, $l_forms;
-	
-		if (empty($group))
+		
+
+		if  ( (empty($group)) && (empty($status)) )
 			$sql = "SELECT * FROM `radcheck` ORDER BY `".$orderby."`";
-		else
+		else if ( (!empty($group)) && (empty($status)) )
 			$sql = "SELECT *
 					FROM radcheck, radusergroup
 					WHERE radcheck.username = radusergroup.username
 					AND radusergroup.groupname = '".$group."' ORDER BY `".$orderby."`";
+		else if ( (empty($group)) && (!empty($status)) )
+			$sql = "SELECT * FROM `radcheck` WHERE `status` = '".$status."' ORDER BY `".$orderby."`";
+		else if ( (!empty($group)) && (!empty($status)) )	
+			$sql = "SELECT *
+					FROM radcheck, radusergroup
+					WHERE radcheck.username = radusergroup.username
+					AND radusergroup.groupname = '".$group."' 
+					AND radcheck.status = '".$status."' ORDER BY `".$orderby."`";
+		
 		
 		$result  = $db->query($sql);
 		$num_results = $db->Num_rows($result);
