@@ -92,6 +92,7 @@ int main ()
 	char				*query;
 	unsigned long int	StartTime;
 	unsigned long int	EndTime;
+	unsigned long int	DelDate;
 	MYSQL_RES			*res;
 	MYSQL_ROW			row;
 	long unsigned int	rows = 0;
@@ -101,9 +102,50 @@ int main ()
 	unsigned int		min;
 	unsigned int		sec;
 	unsigned long int timestamp;
+	static int			lockfd;
 	myint				HTTPin, HTTPout, HTTPSin, HTTPSout, SSHin, SSHout, ICQin, ICQout, SMTPin, SMTPout,
 	SSMTPin, SSMTPout, POP3in, POP3out, POP3Sin, POP3Sout, IMAPin, IMAPout, IMAPSin, IMAPSout, IMAPSSLin, IMAPSSLout, DNSin, DNSout,
 	OTHERin, OTHERout, ALLin, ALLout;
+
+    /*
+     *  пробуем открыть лок-файл, если нету - создаем и лочим
+     *  если есть - пробуем лочить, если не лочится - выходим
+     *  если лочится - продолжаем
+     */
+    lockfd = open (HSTLOCKF, O_RDWR);
+
+    if (lockfd == -1)
+    {
+    	close(lockfd);
+
+    	lockfd = open (HSTLOCKF, O_WRONLY | O_CREAT, 0640);
+
+        if (lockfd == -1)
+        {
+        	syslog (LOG_ERR, " error in open %s", HSTLOCKF);
+        	printf(" error in open %s", HSTLOCKF);
+
+        	exit(EXIT_FAILURE);
+        }
+
+        if ( lockf(lockfd, F_TLOCK, 0) < 0)
+        {
+        	syslog (LOG_ERR, " error in lock %s", HSTLOCKF);
+        	printf(" error in lock %s", HSTLOCKF);
+
+        	exit(EXIT_FAILURE);
+        }
+    }
+    else
+    {
+    	if ( lockf(lockfd, F_TLOCK, 0) < 0)
+    	{
+    		syslog (LOG_ERR, " already working");
+    		printf("already working\n");
+
+    		exit(EXIT_FAILURE);
+    	}
+    }
 
 	//loading config
     vpnms_config = LoadConfig();
@@ -121,13 +163,12 @@ int main ()
 	timestamp = timestamp - min*60 - sec;
 
    	//удаляем записи, которые могли остаться после простоя сервера
-   	query = malloc(512);
-   	sprintf(query, "DELETE FROM `flows` WHERE `TimeStamp` < %lu", StartTime);
-   	exec_query(query);
+	query = malloc(512);
+	sprintf(query, "DELETE FROM `flows` WHERE `TimeStamp` < %lu", StartTime);
+	exec_query(query);
 
 	while(1)
 	{
-
 		//выбираем первую попавшуюся запись из нужного диапазона и смотрим имя владельца
     	query = malloc(256);
     	sprintf(query, "SELECT `flows`.`Owner` FROM `flows` WHERE `TimeStamp` > %lu AND `TimeStamp` < %lu LIMIT 1", StartTime, EndTime);
@@ -329,18 +370,30 @@ int main ()
 
     	exec_query(query);
 
-    	/*
-    	 * подумать насчет того, чтобы оставлять потоки, если это указано в конфиге
-    	 */
 
     	//удаляем обработанные записи
-    	query = malloc(512);
-    	sprintf(query, "DELETE FROM `flows` WHERE `owner` = '%s' AND `TimeStamp` > %lu AND `TimeStamp` < %lu", username, StartTime, EndTime);
-    	exec_query(query);
+   		query = malloc(512);
+   		sprintf(query, "DELETE FROM `flows` WHERE `owner` = '%s' AND `TimeStamp` > %lu AND `TimeStamp` < %lu", username, StartTime, EndTime);
+   		exec_query(query);
 
     	//чистим память
     	free(username);
     }
+
+	//удаляем потоки старши трех месяцев (90 дней)
+	if ( 0 == strcmp(vpnms_config.vpnms_keep_flows, "yes") )
+	{
+		DelDate = (unsigned long)time(NULL) - (3*30*24*60*60);
+
+		query = malloc(512);
+		sprintf(query, "DELETE FROM `flows_archive` WHERE `TimeStamp` < %lu", DelDate);
+		exec_query(query);
+	}
+
+	//удаляем лок-файл
+	lockf(lockfd, F_ULOCK, 0);
+	close(lockfd);
+	unlink(HSTLOCKF);
 
 	return 0;
 }

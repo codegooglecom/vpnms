@@ -150,6 +150,32 @@ void * vpnmsd_nf_thread(void * arg)
                     }
           	        //----
 
+                    //Добавляем поток в архив (если разрешено)
+                    if ( 0 == strcmp(vpnms_config.vpnms_keep_flows, "yes") )
+                    {
+                    	query = malloc(512);
+                    	sprintf(query,
+              	        		"INSERT INTO `flows_archive` ("
+              	        		"`TimeStamp` ,"
+              	        		"`Owner` ,"
+              	        		"`SrcIp` ,"
+              	        		"`SrcPort` ,"
+              	        		"`DstIp` ,"
+              	        		"`DstPort`, "
+              	        		"`Bytes`, "
+                        		"`Local`"
+              	        		") "
+              	        		"VALUES ("
+              	        		" %lu, '%s', '%s', %u, '%s', %u, %u, %u"
+              	        		")",
+              	        		(unsigned long)time(NULL), pUsername, src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
+              	        exec_query_write(query);
+
+                    }
+
+              	    //----
+
 					free(pUsername);
             	}
 
@@ -209,6 +235,32 @@ void * vpnmsd_nf_thread(void * arg)
               	        exec_query_write(query);
                     }
           	        //----
+
+                    //Добавляем поток в архив (если разрешено)
+                    if ( 0 == strcmp(vpnms_config.vpnms_keep_flows, "yes") )
+                    {
+                    	query = malloc(512);
+                    	sprintf(query,
+              	        		"INSERT INTO `flows_archive` ("
+              	        		"`TimeStamp` ,"
+              	        		"`Owner` ,"
+              	        		"`SrcIp` ,"
+              	        		"`SrcPort` ,"
+              	        		"`DstIp` ,"
+              	        		"`DstPort`, "
+              	        		"`Bytes`, "
+              	        		"`Local`"
+              	        		") "
+              	        		"VALUES ("
+              	        		" %lu, '%s', '%s', %u, '%s', %u, %u, %u"
+              	        		")",
+              	        		(unsigned long)time(NULL), pUsername, src_ip, ntohs (pData->r[i].s_port), dst_ip,
+              	        		ntohs (pData->r[i].d_port), ntohl (pData->r[i].octets ), local_flow);
+              	        exec_query_write(query);
+
+                    }
+
+                    //----
 
           	        free(pUsername);
             	}

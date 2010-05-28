@@ -38,7 +38,7 @@ else
 		if (!$_GET['orderby']) 
 			$_GET['orderby']='id';
 		
-		$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group']);
+		$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group'], $_GET['status']);
 		
 		$UsersOptsTpl = $billing->BuildUserOptsTpl('','','');
 		
@@ -109,7 +109,7 @@ else
 			if (!$_GET['orderby']) 
 			$_GET['orderby']='id';
 		
-			$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group']);
+			$billing->ShowUsers($_GET['orderby'], $_GET['month'], $_GET['group'], $_GET['status']);
 			
 			$personal_opts = $billing->PersonalOpts($_GET['UserName']);
 			

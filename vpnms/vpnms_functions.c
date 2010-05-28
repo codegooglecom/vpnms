@@ -95,6 +95,7 @@ struct s_vpnms_config LoadConfig()
 	v_config.vpnms_cmd_debug = "no";
 	v_config.vpnms_pf_file_debug = "no";
 	v_config.vpnms_disconnect_on_crash = "yes";
+	v_config.vpnms_keep_flows = "no";
 
 	v_config.vars_pfctl = "/sbin/pfctl";
 	v_config.vars_echo = "/bin/echo";
@@ -148,6 +149,8 @@ struct s_vpnms_config LoadConfig()
 			v_config.vpnms_pf_file_debug = config_get_string (config_f, "vpnms", "pf_file_debug");
 		if (config_get_string (config_f, "vpnms", "disconnect_on_crash") != NULL)
 			v_config.vpnms_disconnect_on_crash = config_get_string (config_f, "vpnms", "disconnect_on_crash");
+		if (config_get_string (config_f, "vpnms", "keep_flows") != NULL)
+			v_config.vpnms_keep_flows = config_get_string (config_f, "vpnms", "keep_flows");
 
 		if (config_get_string (config_f, "vars", "pfctl") != NULL)
 			v_config.vars_pfctl = config_get_string (config_f, "vars", "pfctl");
