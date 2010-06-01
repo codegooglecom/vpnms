@@ -249,7 +249,7 @@ else
 						$direction = " AND `SrcIp` LIKE '10.%.%.%'";
 						break;
 				}
-
+				
 			if ( ($_POST['flows_type'] != "any") && (! empty($_POST['flows_type'])) )
 				switch ($_POST['flows_type']) {
 					case "local":
@@ -267,13 +267,12 @@ else
 			else
 			{
 				$limit = $_GET['flows']." , 30";
-				$prev_flows = $prev_flows - 30;
-				$next_flows = $next_flows + 30;
+				$prev_flows = $_GET['flows'] - 30;
+				$next_flows = $_GET['flows'] + 30;
 			}
 				
-			$query = "SELECT ".$select." FROM `flows` WHERE 1".$login.$ip.$dstp.$srcp.$start_date.$end_date.$direction.$type." LIMIT ".$limit;
-			echo $query;
-			//$res = $db->query($query);
+			$query = "SELECT ".$select." FROM `flows_archive` WHERE 1".$login.$ip.$dstp.$srcp.$start_date.$end_date.$direction.$type." LIMIT ".$limit;
+			$res = $db->query($query);
 			
 			if ($_POST['flows_summ'] == 'on')
 			{
@@ -283,7 +282,20 @@ else
 			}
 			else
 			{
+				include ('templates/' . $config['template'] . '/flows_table_header.html');
 				
+				$num_results = $db->Num_rows($res);
+				
+				for ($i = 0; $i < $num_results; $i++)
+				{
+					$row = $db->Fetch_array($res);
+					$date = date("Y M d G:i:s", $row['TimeStamp']);
+					
+					include ('templates/' . $config['template'] . '/flows_table_body.html');
+				}
+				
+				include ('templates/' . $config['template'] . '/table_footer.html');
+			
 			}
 			
 			include ('templates/' . $config['template'] . '/admin-cp_menu.html');

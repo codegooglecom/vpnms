@@ -381,7 +381,7 @@ struct s_balance check_balance(char *username)
 	//input, output, local input, local output
 	query = malloc(256);
 	sprintf(query, "SELECT SUM(InternetIn) AS Input, SUM(InternetOut) AS Output, SUM(LocalIn) AS LocalInput, SUM(LocalOut) AS LocalOutput "
-			"FROM `sessions` WHERE `UserName` = '%s'", username);
+			"FROM `sessions` WHERE `UserName` = '%s' AND `Rotation` = 1", username);
 	res = exec_query(query);
 	row = mysql_fetch_row(res);
 
