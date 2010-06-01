@@ -196,4 +196,7 @@ $l_tables['bytes'] = "Байт";
 $l_tables['url'] = "Сайт";
 $l_tables['file'] = "Файл";
 $l_tables['active_sessions'] = "Активные сессии";
+$l_tables['ip_and_port'] = "Адрес и порт";
+$l_tables['yes'] = "Да";
+$l_tables['no'] = "Нет";
 ?>

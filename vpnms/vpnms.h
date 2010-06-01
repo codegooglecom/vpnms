@@ -41,7 +41,7 @@
 #include "vpnms_functions.h"
 
 #define VERSION "1.0.0 "
-#define REVISION "41"
+#define REVISION "55"
 #define PIDFILE "/var/run/vpnmsd.pid"
 #define CONFIGFILE "/usr/local/etc/vpnms.conf"
 #define HSTLOCKF "/tmp/hourlystat.lock"

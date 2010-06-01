@@ -344,7 +344,9 @@ int main(int argc, char **argv)
           	        	if (strcasecmp(balance.limit_type, LIMIT_TYPE_LIMITED) == 0 )
           	        		if ( (balance.input >= balance.limit) || (balance.output >= balance.out_limit) )
           	        		{
+								#ifdef DEBUG
           	        			syslog (LOG_DEBUG, " limit expired: %s", pUsername);
+								#endif
           	        			cmd = malloc(256);
           	        			sprintf(cmd, "%s %s", vpnms_config.vars_ond, pUsername);
           	        			exec_cmd(cmd);
